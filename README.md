@@ -2,7 +2,7 @@
 
 ## What is this?
 
-It's cards against humanity but as a LAN mobile game.
+It's cards against humanity but as a LAN mobile game for android.
 
 ## Why have you done this?
 
@@ -21,7 +21,7 @@ I've never been this bored. I was gonna use cordova or something like that but I
 
 Peers can start the app, create games and join games and even get as far as reading out a black card / submitting a white card
 
-Nobody can win the game because I only have two devices to test on (solution = make the same app on IOS).
+Nobody can win the game because I only have two devices to test on (solution = make the same app on IOS) (not true, got some more devices to play with, working prototype available).
 
 Most of the protocol is defined:
 
@@ -77,7 +77,7 @@ VERB byte[2]
   CROWN
     Peers send CROWN followed by the card number, followed by the game name, followed by the peer name to notify other peers which card from this round has been awarded by the card czar.
 
-  CROWN (long)card gameName &--& peerName
+    CROWN (long)card gameName &--& peerName
 
 ```
 
@@ -87,7 +87,7 @@ As you can see, very much WIP although the protocol VERBs might not change much 
 
 We are now at first alpha.
 
-The game is playable on my own home network. Ideally if you want to play, you need two other player who have an android device to play this on.
+The game is playable on my own home network (and your's too, probably). Ideally if you want to play, you need two other players who have an android device to play this on.
 
 The UI should work on most devices.
 
