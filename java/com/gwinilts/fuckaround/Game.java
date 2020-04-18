@@ -9,26 +9,32 @@ public class Game {
     private NetworkLayer layer;
     private boolean czar;
     private long currentBlackCard;
+    private boolean played;
+    private long currentPlay;
 
     public Game(NetworkLayer layer, String gameName, String peerName) {
         this.name = gameName;
         this.peer = peerName;
         this.layer = layer;
         this.currentHand = new Hand(peer, 0);
+        this.currentPlay = 0;
+        this.played = false;
         round = 0;
     }
 
-    public void setRound(int round, String czar, long blackCard) {
+    public boolean setRound(int round, String czar, long blackCard) {
         if (this.round == round) {
             if (!currentHand.ready(round)) {
-                layer.addMsg(generateDeck());
+                return true;
             }
-            return;
+            return false;
         }
 
         this.round = round;
         this.currentCzar = czar;
         this.currentBlackCard = blackCard;
+        this.played = false;
+        this.currentPlay = 0;
 
         this.czar = (this.currentCzar.equals(this.peer));
         layer.addMsg(generateDeck());
@@ -36,8 +42,10 @@ public class Game {
 
         if (this.czar) {
             layer.openCzarView();
+            return false;
         } else {
             layer.openPlayView();
+            return true;
         }
     }
 
@@ -61,7 +69,7 @@ public class Game {
         return this.currentBlackCard;
     }
 
-    private byte[] generateDeck() {
+    public byte[] generateDeck() {
         byte[] data = (name + "&--&" + peer).getBytes();
 
         byte[] deck = NetworkLayer.Verb.DECK.get(data.length + 4);
@@ -73,7 +81,7 @@ public class Game {
         return deck;
     }
 
-    public byte[] generatePlay(long card) {
+    public byte[] generatePlay() {
         byte[] nom = (name + "&--&" + peer).getBytes();
         byte[] play = NetworkLayer.Verb.PLAY.get(nom.length + 12);
 
@@ -82,10 +90,19 @@ public class Game {
         }
 
         for (int i = 0; i < 8; i++) {
-            play[i + 2] = (byte)(card >> (i * 8));
+            play[i + 2] = (byte)(this.currentPlay >> (i * 8));
         }
 
         return play;
+    }
+
+    public void play(long card) {
+        this.currentPlay = card;
+        this.played = true;
+    }
+
+    public boolean isPlayed() {
+        return this.played;
     }
 
     public Hand getHand() {

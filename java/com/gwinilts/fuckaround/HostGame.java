@@ -56,6 +56,9 @@ public class HostGame {
 
     public void submitCard(String peer, long card) {
         Hand h = currentDecks.get(peer);
+        PeerPlay p = currentPlay.get(peer);
+
+        if (p != null) return;
 
         int index = h.indexOf(card);
 

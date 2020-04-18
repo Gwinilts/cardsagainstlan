@@ -5,6 +5,9 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
+import android.view.inputmethod.InputMethodManager;
+
 import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
@@ -30,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> gameList;
     private ArrayAdapter<String> currentGamePeerList;
     private CardDeckAdapter cardDeckAdapter;
-    private CardDeckAdapter czarPlayCards;
+    private CzarDeckAdapter czarPlayCards;
     private RecyclerView.LayoutManager cardDeckAdapterManager;
     private RecyclerView.LayoutManager czarPlayCardsManager;
 
@@ -84,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         gameList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice);
         currentGamePeerList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         cardDeckAdapter = new CardDeckAdapter(this, new ArrayList<CardData>());
-        czarPlayCards = new CardDeckAdapter(this, new ArrayList<CardData>());
+        czarPlayCards = new CzarDeckAdapter(this, new ArrayList<CardData>());
 
         online.setAdapter(onlineList);
         joinable.setAdapter(gameList);
@@ -161,10 +164,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void hideKbd(final View view) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
+            }
+        });
+    }
+
     public void tryClaimName(View view) {
         EditText cname = (EditText)findViewById(R.id.uname);
         TextView prompt = (TextView)findViewById(R.id.prompt);
         String uname = cname.getText().toString().trim();
+        hideKbd(view);
 
         if (uname.length() < 2) {
             prompt.setText("You need to set a fucking name, bitch");
@@ -185,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 splashFrame.setVisibility(View.GONE);
                 lobbyFrame.setVisibility(View.VISIBLE);
+
             }
         });
     }
@@ -194,7 +209,9 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                EditText cname = (EditText)findViewById(R.id.uname);
                 prompt.setText("Someone is already using this name, please change it.");
+                hideKbd(cname);
             }
         });
     }
@@ -202,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
     public void createButtonClick(View view) {
         lobbyFrame.setVisibility(View.GONE);
         hostFrame.setVisibility(View.VISIBLE);
+        hideKbd(view);
     }
 
 
@@ -209,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
         EditText nameInput = findViewById(R.id.hostName);
         TextView prompt = findViewById(R.id.hostPrompt);
         String name = nameInput.getText().toString().trim();
+        hideKbd(view);
 
         if (name.length() > 1 && name.length() < 100) {
             if (name.contains("&")) {
@@ -257,8 +276,6 @@ public class MainActivity extends AppCompatActivity {
                         cardDeckAdapter.deck.add(card);
                         System.out.println(card.getText());
                         cardDeckAdapter.notifyDataSetChanged();
-                        gameFrame.setVisibility(View.GONE);
-                        gameFrame.setVisibility(View.VISIBLE);
                     }
                 }
             }
@@ -307,6 +324,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateCzarWhiteCards(final CardData card) {
+        if (czarPlayCards.hasCard(card.getHash())) return;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -317,11 +335,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void submitWhitecard(int index) {
+        if (cardDeckAdapter.deck.size() < 10) return;
         long card = cardDeckAdapter.deck.get(index).getHash();
         cardDeckAdapter.deck.remove(index);
         cardDeckAdapter.notifyDataSetChanged();
 
         layer.playCard(card);
+    }
+
+    public void awardRound(long card) {
+        czarPlayCards.deck.clear();
+
+        // TODO award round
     }
 
     public void hostCancelButtonClick(View view) {

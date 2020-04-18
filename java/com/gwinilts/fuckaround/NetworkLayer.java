@@ -149,7 +149,7 @@ public class NetworkLayer implements Runnable {
                 // poke every 1200 ms so other clients know we're here
                 sinceLastPoke = System.currentTimeMillis() - lastPokeTime;
 
-                if (sinceLastPoke > 1200)  {
+                if (sinceLastPoke > 600)  {
                     lastPokeTime = System.currentTimeMillis();
                     speaker.addMsg(generatePoke());
 
@@ -157,10 +157,14 @@ public class NetworkLayer implements Runnable {
                         speaker.addMsg(generateJoin());
                         if (host) {
                             speaker.addMsg(generateInvite());
-
                             if (currentHostGame != null) {
                                 speaker.addMsg(currentHostGame.generateRound());
                             }
+                        }
+                    }
+                    if (currentGame != null) {
+                        if (currentGame.isPlayed()) {
+                            speaker.addMsg(currentGame.generatePlay());
                         }
                     }
                 }
@@ -187,7 +191,7 @@ public class NetworkLayer implements Runnable {
                 }
             }
             handleMsg();
-            if ((System.currentTimeMillis() - lastPollTime) > 1000) {
+            if ((System.currentTimeMillis() - lastPollTime) > 500) {
                 userPoll();
                 invitePoll();
                 gamePoll();
@@ -201,7 +205,7 @@ public class NetworkLayer implements Runnable {
         byte[] msg;
         long t = System.currentTimeMillis() + 600;
 
-        while (((msg = nextMsg()) != null) && System.currentTimeMillis() < t) {
+        while (((msg = nextMsg()) != null)) {
             byte[] data = new byte[msg.length - 4];
 
             for (int i = 0; i < data.length && i < 2044; i++) {
@@ -324,7 +328,6 @@ public class NetworkLayer implements Runnable {
         String nom = new String(msg);
 
         if (peerNames.contains(nom)) {
-            System.out.println("Got POKE from known peer");
             peerLastSeen.put(nom, System.currentTimeMillis());
         } else {
             System.out.println("Discovered new peer " + nom);
@@ -466,7 +469,9 @@ public class NetworkLayer implements Runnable {
 
         if (game.equals(gName)) {
             System.out.println("got valid round");
-            currentGame.setRound(round, cName, card);
+            if (currentGame.setRound(round, cName, card)) {
+                this.speaker.addMsg(currentGame.generateDeck());
+            }
         }
     }
 
@@ -480,7 +485,6 @@ public class NetworkLayer implements Runnable {
         Invite game;
 
         if (gameNames.contains(data[0])) {
-            System.out.println("Got INVITE for known game");
 
             game = gameData.get(data[0]);
 
@@ -512,7 +516,6 @@ public class NetworkLayer implements Runnable {
         }
 
         if (currentGamePeers.contains(data[0])) {
-            System.out.println("Got JOIN from known peer");
             currentGameLastSeen.put(data[0], System.currentTimeMillis());
         } else {
             System.out.println("Got JOIN from new peer");
@@ -675,7 +678,7 @@ public class NetworkLayer implements Runnable {
     }
 
     public void playCard(long card) {
-        speaker.addMsg(currentGame.generatePlay(card));
+        currentGame.play(card);
     }
 
     public boolean peerIsLive(String name) {

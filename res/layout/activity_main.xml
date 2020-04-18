@@ -80,7 +80,7 @@
         android:id="@+id/frame2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <ListView
             android:id="@+id/online"
@@ -112,37 +112,39 @@
 
         <ListView
             android:id="@+id/joinable"
-            android:layout_width="408dp"
-            android:layout_height="222dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="2dp"
-            android:layout_marginTop="417dp"
+            android:layout_marginEnd="1dp"
+            android:layout_marginBottom="92dp"
             android:choiceMode="singleChoice"
             android:clickable="true"
             android:drawSelectorOnTop="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <Button
             android:id="@+id/joinbutton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="47dp"
-            android:layout_marginTop="658dp"
+            android:layout_marginBottom="25dp"
             android:onClick="joinGameClick"
             android:text="Join"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <Button
             android:id="@+id/createbutton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="278dp"
-            android:layout_marginTop="658dp"
+            android:layout_marginEnd="45dp"
+            android:layout_marginBottom="25dp"
             android:onClick="createButtonClick"
             android:text="Create"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -203,14 +205,10 @@
             android:id="@+id/whitecards"
             android:layout_width="410dp"
             android:layout_height="257dp"
-            android:layout_marginTop="477dp"
-            android:layout_marginEnd="1dp"
             android:padding="10dp"
             android:scrollbars="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/textView7"
@@ -385,25 +383,10 @@
             android:layout_width="409dp"
             android:layout_height="237dp"
             android:layout_marginStart="1dp"
-            android:layout_marginTop="493dp"
-            android:layout_marginEnd="1dp"
             android:layout_marginBottom="1dp"
             android:scrollbars="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
-            android:id="@+id/button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="22dp"
-            android:layout_marginTop="389dp"
-            android:longClickable="true"
-            android:text="Turn Over"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
