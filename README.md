@@ -37,6 +37,8 @@ VERB byte[2]
   0x7 - DEAL - Give other peer cards
   0x8 - PLAY - Submit card to card-czar (and game host)
   0x9 - DECK - Ask for cards
+  0xA - AWARD - Tell Host who won the round
+  0xB - CROWN - Tell peers who won the round
 
   POKE:
     Peers send POKE followed by their name to notify other peers of their presence on the network.
