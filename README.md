@@ -75,21 +75,13 @@ VERB byte[2]
     AWARD (int)round (long)card gameName
 
   CROWN
+    Peers send CROWN followed by the card number, followed by the game name, followed by the peer name to notify other peers which card from this round has been awarded by the card czar.
 
   CROWN (long)card gameName &--& peerName
 
 ```
 
-The rest haven't been defined yet but will probably include:
-
-```
-VERB byte[2]
-  0xa - AWARD - say who the round winner is
-  0xb - CROWN - say what someone's score is
-
-```
-
-As you can see, very much WIP.
+As you can see, very much WIP although the protocol VERBs might not change much anymore.
 
 # Status
 
