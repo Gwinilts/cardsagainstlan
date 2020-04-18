@@ -36,6 +36,10 @@ public class Hand {
         return -1;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public boolean ready(int round) {
         return round == this.round;
     }

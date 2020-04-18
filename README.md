@@ -69,6 +69,15 @@ VERB byte[2]
 
     PLAY gameName &--& peerName
 
+  AWARD
+    Peers send AWARD followed by round number, followed by card number, followed by game name to notify peers which card has won the round
+
+    AWARD (int)round (long)card gameName
+
+  CROWN
+
+  CROWN (long)card gameName &--& peerName
+
 ```
 
 The rest haven't been defined yet but will probably include:
@@ -76,8 +85,30 @@ The rest haven't been defined yet but will probably include:
 ```
 VERB byte[2]
   0xa - AWARD - say who the round winner is
-  0xb - SCORE - say what someone's score is
+  0xb - CROWN - say what someone's score is
 
 ```
 
 As you can see, very much WIP.
+
+# Status
+
+We are now at first alpha.
+
+The game is playable on my own home network. Ideally if you want to play, you need two other player who have an android device to play this on.
+
+The UI should work on most devices.
+
+## Broken
+
+At the moment there is a prompt to show a help dialog for the game. It doesn't do anything.
+
+If it was to do anything there would have to be a concept of currentView, the root view that is being displayed as View.VISIBLE
+
+That way when it closes we can restore that view.
+
+Other considerations are that if something happens to change the currentView outside of the control of the peer's device either:
+
+We should immediately close the help dialog
+
+Or we should be able to open the the new currentView when this peer hits 'Exit'

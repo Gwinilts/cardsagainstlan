@@ -11,6 +11,8 @@ public class Game {
     private long currentBlackCard;
     private boolean played;
     private long currentPlay;
+    private long currentAward;
+    private boolean awarded;
 
     public Game(NetworkLayer layer, String gameName, String peerName) {
         this.name = gameName;
@@ -19,6 +21,8 @@ public class Game {
         this.currentHand = new Hand(peer, 0);
         this.currentPlay = 0;
         this.played = false;
+        this.awarded = false;
+        this.currentAward = 0;
         round = 0;
     }
 
@@ -34,6 +38,8 @@ public class Game {
         this.currentCzar = czar;
         this.currentBlackCard = blackCard;
         this.played = false;
+        this.currentAward = 0;
+        this.awarded = false;
         this.currentPlay = 0;
 
         this.czar = (this.currentCzar.equals(this.peer));
@@ -65,6 +71,10 @@ public class Game {
         System.out.println("finished setting deck");
     }
 
+    public boolean checkRound(int round) {
+        return this.round == round;
+    }
+
     public long getBlackCard() {
         return this.currentBlackCard;
     }
@@ -83,22 +93,56 @@ public class Game {
 
     public byte[] generatePlay() {
         byte[] nom = (name + "&--&" + peer).getBytes();
-        byte[] play = NetworkLayer.Verb.PLAY.get(nom.length + 12);
+        byte[] play = NetworkLayer.Verb.PLAY.get(nom.length + 16);
 
         for (int i = 0; i < nom.length; i++) {
-            play[i + 10] = nom[i];
+            play[i + 14] = nom[i];
+        }
+
+        for (int i = 0; i < 4; i++) {
+            play[i + 2] = (byte)(this.round >> (i * 8));
         }
 
         for (int i = 0; i < 8; i++) {
-            play[i + 2] = (byte)(this.currentPlay >> (i * 8));
+            play[i + 6] = (byte)(this.currentPlay >> (i * 8));
         }
 
         return play;
     }
 
+    public byte[] generateAward() {
+        byte[] nom = (name).getBytes();
+        byte[] award = NetworkLayer.Verb.AWARD.get(nom.length + 20);
+
+        for (int i = 0; i < nom.length; i++) {
+            award[i + 14] = nom[i];
+        }
+
+        for (int i = 0; i < 4; i++) {
+            award[i + 2] = (byte)(this.round >> (i * 8));
+        }
+
+        for (int i = 0; i < 8; i++) {
+            award[i + 6] = (byte)(this.currentAward >> (i * 8));
+        }
+
+        return award;
+    }
+
+
+
     public void play(long card) {
         this.currentPlay = card;
         this.played = true;
+    }
+
+    public void award(long card) {
+        this.currentAward = card;
+        this.awarded = true;
+    }
+
+    public boolean isAwarded() {
+        return this.awarded;
     }
 
     public boolean isPlayed() {

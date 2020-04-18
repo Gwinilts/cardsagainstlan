@@ -31,10 +31,12 @@ public class HostGame {
     private long currentBlackCard;
     private ArrayList<Long> whiteDeck;
     private ArrayList<Long> blackDeck;
+    private ArrayList<Crown> crowns;
     private Random rng;
     private String gameName;
 
     private int round;
+    private boolean roundAwarded;
     private ArrayList<String> winners;
 
     public HostGame(NetworkLayer l, String name) {
@@ -42,6 +44,7 @@ public class HostGame {
         allPeers = new LinkedList<String>();
         currentDecks = new HashMap<String, Hand>();
         currentPlay = new HashMap<>();
+        crowns = new ArrayList<>();
         rng = new Random();
         this.gameName = name;
 
@@ -62,14 +65,43 @@ public class HostGame {
 
         int index = h.indexOf(card);
 
+        System.out.println("submit " + card + " at " + index + " for " + peer);
+
         if (index > -1) {
             currentPlay.put(peer, new PeerPlay(card, index));
+        }
+    }
+
+    public boolean hasAwards() {
+        return crowns.size() > 0;
+    }
+
+    public byte[][] generateCrowns() {
+        byte[][] crowns = new byte[this.crowns.size()][];
+
+        for (int i = 0; i < crowns.length; i++) {
+            crowns[i] = this.crowns.get(i).generate(gameName);
+        }
+
+        return crowns;
+    }
+
+    public void awardRound(long card, int round) {
+        if (round != this.round) return;
+
+        for (Hand h: currentDecks.values()) {
+            if (h.indexOf(card) > -1) {
+                crowns.add(new Crown(h.getName(), currentBlackCard));
+                nextRound();
+                return;
+            }
         }
     }
 
     public void nextRound() {
         round++;
         Hand deck;
+        PeerPlay play;
 
         for (String peer: allPeers) { // deal the white cards
             deck = currentDecks.get(peer);
@@ -79,7 +111,11 @@ public class HostGame {
                     deck.setCard(i, pickRandomWhiteCard());
                 }
             } else {
-                deck.setCard(currentPlay.get(peer).getIndex(), pickRandomWhiteCard());
+                System.out.println("concering " + peer + "...");
+                play = currentPlay.get(peer);
+                if (play != null) {
+                    deck.setCard(play.getIndex(), pickRandomWhiteCard());
+                }
             }
         }
 

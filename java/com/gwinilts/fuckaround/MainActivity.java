@@ -1,7 +1,6 @@
 package com.gwinilts.fuckaround;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -12,9 +11,10 @@ import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
 
+import com.google.android.material.tabs.TabLayout;
+
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.io.File;
 
@@ -25,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private View hostFrame;
     private View gameLobbyFrame;
     private View czarGameFrame;
+    private View tabbedGameView;
+    private View gameScoreTab;
 
     private String username;
     private NetworkLayer layer;
@@ -34,8 +36,11 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> currentGamePeerList;
     private CardDeckAdapter cardDeckAdapter;
     private CzarDeckAdapter czarPlayCards;
+    private ScoreDeckAdapter scoreCards;
     private RecyclerView.LayoutManager cardDeckAdapterManager;
     private RecyclerView.LayoutManager czarPlayCardsManager;
+    private RecyclerView.LayoutManager scoreCardManager;
+    private boolean czarMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,18 +58,22 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        this.splashFrame = findViewById(R.id.frame1);
-        this.lobbyFrame = findViewById(R.id.frame2);
-        this.gameFrame = findViewById(R.id.frame3);
-        this.hostFrame = findViewById(R.id.frame4);
-        this.gameLobbyFrame = findViewById(R.id.frame5);
-        this.czarGameFrame = findViewById(R.id.frame6);
+        this.splashFrame = findViewById(R.id.entryPointFrame);
+        this.lobbyFrame = findViewById(R.id.networkStatusFrame);
+        this.gameFrame = findViewById(R.id.gameNormalView);
+        this.hostFrame = findViewById(R.id.createMatchFrame);
+        this.gameLobbyFrame = findViewById(R.id.gameLobbyFrame);
+        this.czarGameFrame = findViewById(R.id.cardCzarGameView);
+        this.tabbedGameView = findViewById(R.id.gameLayoutFrame);
+        this.gameScoreTab = findViewById(R.id.gameScoreView);
 
         this.lobbyFrame.setVisibility(View.GONE);
         this.gameFrame.setVisibility(View.GONE);
         this.hostFrame.setVisibility(View.GONE);
         this.gameLobbyFrame.setVisibility(View.GONE);
         this.splashFrame.setVisibility(View.VISIBLE);
+
+        this.czarMode = false;
 
         try {
             this.layer = new NetworkLayer(this);
@@ -82,24 +91,62 @@ public class MainActivity extends AppCompatActivity {
         ListView currentGamePeers = (ListView) findViewById(R.id.currentGameList);
         RecyclerView cardDeck = (RecyclerView) findViewById(R.id.whitecards);
         RecyclerView playDeck = (RecyclerView) findViewById(R.id.czarPlayDeck);
+        RecyclerView scoreDeck = (RecyclerView) findViewById(R.id.playerScoreDeck);
+
+        View splashCard = findViewById(R.id.entryPointCard);
+
+        splashCard.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                tryClaimName(v);
+                return true;
+            }
+        });
 
         onlineList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         gameList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice);
         currentGamePeerList = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         cardDeckAdapter = new CardDeckAdapter(this, new ArrayList<CardData>());
         czarPlayCards = new CzarDeckAdapter(this, new ArrayList<CardData>());
+        scoreCards = new ScoreDeckAdapter(this, new ArrayList<CardData>());
 
         online.setAdapter(onlineList);
         joinable.setAdapter(gameList);
         currentGamePeers.setAdapter(currentGamePeerList);
         cardDeck.setAdapter(cardDeckAdapter);
         playDeck.setAdapter(czarPlayCards);
+        scoreDeck.setAdapter(scoreCards);
 
         cardDeckAdapterManager = new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false);
         cardDeck.setLayoutManager(cardDeckAdapterManager);
 
         czarPlayCardsManager = new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false);
         playDeck.setLayoutManager(czarPlayCardsManager);
+
+        scoreCardManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
+        scoreDeck.setLayoutManager(scoreCardManager);
+
+        TabLayout t = findViewById(R.id.gameTabLayout);
+        t.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
+                    openGameTab();
+                } else {
+                    openScoreTab();
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
     }
 
     private void shipAssets() {
@@ -256,17 +303,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void openCzarView(final String cardText) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                gameLobbyFrame.setVisibility(View.GONE);
-                gameFrame.setVisibility(View.GONE);
-                czarGameFrame.setVisibility(View.VISIBLE);
-            }
-        });
-    }
-
     public void updateHand(final CardData[] cards) {
         runOnUiThread(new Runnable() {
             @Override
@@ -282,13 +318,49 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void openGameTab() {
+        gameLobbyFrame.setVisibility(View.GONE);
+        gameScoreTab.setVisibility(View.GONE);
+        tabbedGameView.setVisibility(View.VISIBLE);
+
+        if (czarMode) {
+            gameFrame.setVisibility(View.GONE);
+            czarGameFrame.setVisibility(View.VISIBLE);
+        } else {
+            gameFrame.setVisibility(View.VISIBLE);
+            czarGameFrame.setVisibility(View.GONE);
+        }
+    }
+
+    public void openScoreTab() {
+        gameFrame.setVisibility(View.GONE);
+        czarGameFrame.setVisibility(View.GONE);
+        tabbedGameView.setVisibility(View.VISIBLE);
+        gameScoreTab.setVisibility(View.VISIBLE);
+    }
+
     public void openGameView() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                gameLobbyFrame.setVisibility(View.GONE);
-                czarGameFrame.setVisibility(View.GONE);
-                gameFrame.setVisibility(View.VISIBLE);
+                czarMode = false;
+                TabLayout t = findViewById(R.id.gameTabLayout);
+                t.getTabAt(0).select();
+                openGameTab();
+            }
+        });
+    }
+
+    public void openCzarView(final String cardText) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                czarMode = true;
+                TabLayout t = findViewById(R.id.gameTabLayout);
+                t.getTabAt(0).select();
+                czarPlayCards.deck.clear();
+                czarPlayCards.notifyDataSetChanged();
+                openGameTab();
             }
         });
     }
@@ -319,7 +391,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void cardTest(View view) {
         splashFrame.setVisibility(View.GONE);
-        gameFrame.setVisibility(View.VISIBLE);
+        tabbedGameView.setVisibility(View.VISIBLE);
+
+        scoreCards.deck.add(new CardData("go fuck yourself", 1));
+        scoreCards.deck.add(new CardData("go love someone", 2));
+
+        cardDeckAdapter.deck.add(new CardData("pish posh", 23));
+        cardDeckAdapter.deck.add(new CardData("mish mosh", 27));
+
+        czarPlayCards.deck.add(new CardData("fanny piss", 41));
+        czarPlayCards.deck.add(new CardData("smelly nose", 47));
+
+        scoreCards.notifyDataSetChanged();
+        cardDeckAdapter.notifyDataSetChanged();
+        czarPlayCards.notifyDataSetChanged();
+
+        openGameView();
 
     }
 
@@ -345,8 +432,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void awardRound(long card) {
         czarPlayCards.deck.clear();
-
+        layer.awardRound(card);
         // TODO award round
+    }
+
+    public void addCrown(final CardData c) {
+        for (CardData card: scoreCards.deck) {
+            if (card.equals(c)) return;
+        }
+        scoreCards.deck.add(c);
+        scoreCards.notifyDataSetChanged();
     }
 
     public void hostCancelButtonClick(View view) {

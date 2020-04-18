@@ -14,7 +14,9 @@ public class NetworkLayer implements Runnable {
         ROUND (0x6, 0x0),
         DEAL (0x7, 0x0),
         PLAY (0x8, 0x0),
-        DECK (0x9, 0x0);
+        DECK (0x9, 0x0),
+        AWARD (0xa, 0x0),
+        CROWN (0xb, 0x0);
 
         private byte a;
         private byte b;
@@ -36,6 +38,8 @@ public class NetworkLayer implements Runnable {
                     case 0x7: return DEAL;
                     case 0x8: return PLAY;
                     case 0x9: return DECK;
+                    case 0xa: return AWARD;
+                    case 0xb: return CROWN;
                 }
             }
             throw new NetworkLayerException(NetworkLayerException.Kind.VERB);
@@ -159,12 +163,21 @@ public class NetworkLayer implements Runnable {
                             speaker.addMsg(generateInvite());
                             if (currentHostGame != null) {
                                 speaker.addMsg(currentHostGame.generateRound());
+
+                                if (currentHostGame.hasAwards()) {
+                                    for (byte[] crown: currentHostGame.generateCrowns()) {
+                                        speaker.addMsg(crown);
+                                    }
+                                }
                             }
                         }
                     }
                     if (currentGame != null) {
                         if (currentGame.isPlayed()) {
                             speaker.addMsg(currentGame.generatePlay());
+                        }
+                        if (currentGame.isAwarded()) {
+                            speaker.addMsg(currentGame.generateAward());
                         }
                     }
                 }
@@ -250,6 +263,14 @@ public class NetworkLayer implements Runnable {
                     }
                     case PLAY: {
                         checkPlay(data);
+                        break;
+                    }
+                    case AWARD: {
+                        checkAward(data);
+                        break;
+                    }
+                    case CROWN: {
+                        checkCrown(data);
                         break;
                     }
                     default: {
@@ -404,7 +425,44 @@ public class NetworkLayer implements Runnable {
         if (game == null || currentGame == null) return;
 
         long card = 0;
+        int round = 0;
         int split;
+        String data;
+
+        for (int i = 0; i < 4; i++) {
+            round |= ((int)(msg[i]) & 0x000000FF) << (i * 8);
+            msg[i] = ' ';
+        }
+
+        for (int i = 0; i < 8; i++) {
+            card |= ((long)(msg[i + 4]) & 0x00000000000000FF) << (i * 8);
+            msg[i + 4] = ' ';
+        }
+
+        System.out.println("got play " + String.format("0x%016X", card));
+
+        if (currentGame.checkRound(round)) {
+            data = (new String(msg)).trim();
+
+            split = data.indexOf("&--&");
+
+            if (game.equals(data.substring(0, split))) {
+                if (currentHostGame != null) {
+                    currentHostGame.submitCard(data.substring(split + 4), card);
+                }
+                if (currentGame.isCzar()) {
+                    addWhiteCard(card);
+                }
+            }
+        } else {
+            System.out.println("wrong round");
+        }
+    }
+
+    private void checkCrown(byte[] msg) {
+        if (game == null || currentGame == null) return;
+
+        long card = 0;
         String data;
 
         for (int i = 0; i < 8; i++) {
@@ -412,18 +470,11 @@ public class NetworkLayer implements Runnable {
             msg[i] = ' ';
         }
 
-        System.out.println("got play " + String.format("0x%016X", card));
-
         data = (new String(msg)).trim();
 
-        split = data.indexOf("&--&");
-
-        if (game.equals(data.substring(0, split))) {
-            if (currentHostGame != null) {
-                currentHostGame.submitCard(data.substring(split + 4), card);
-            }
-            if (currentGame.isCzar()) {
-                addWhiteCard(card);
+        if (game.equals(data.substring(0, data.indexOf("&--&")))) {
+            if (name.equals(data.substring(data.indexOf("&--&") + 4))) {
+                addCrown(card);
             }
         }
     }
@@ -437,6 +488,30 @@ public class NetworkLayer implements Runnable {
         if (game.equals(data.substring(0, split))) {
             System.out.println("got valid deck");
             speaker.addMsg(currentHostGame.generateDeal(data.substring(split + 4)));
+        }
+    }
+
+    private void checkAward(byte[] msg) {
+        if ((game == null) || (host == false) || currentHostGame == null) return;
+
+        int round = 0;
+        long card = 0;
+        String gName;
+
+        for (int i = 0; i < 4; i++) {
+            round |= ((int)(msg[i]) & 0x000000FF) << (8 * i);
+            msg[i] = ' ';
+        }
+
+        for (int i = 0; i < 8; i++) {
+            card |= ((long)(msg[i + 4]) & 0x00000000000000FF) << (8 * i);
+            msg[i + 4] = ' ';
+        }
+
+        gName = (new String(msg)).trim();
+
+        if (game.equals(gName)) {
+            currentHostGame.awardRound(card, round);
         }
     }
 
@@ -454,8 +529,6 @@ public class NetworkLayer implements Runnable {
             round |= ((int)(msg[i]) & 0x000000FF) << (8 * i);
             msg[i] = ' ';
         }
-
-        String dbg = ""; // transport is ok, reconstruction is not ok
 
         for (int i = 0; i < 8; i++) {
             card |= ((long)(msg[i + 4]) & 0x00000000000000FF) << (8 * i);
@@ -645,12 +718,6 @@ public class NetworkLayer implements Runnable {
         }
     }
 
-    public void openCzarView() {
-        String cardText = new String(blackcards.get(currentGame.getBlackCard()));
-
-        app.openCzarView(cardText);
-    }
-
     public void addWhiteCard(long card) {
         CardData c = new CardData(new String(whitecards.get(card)), card);
         app.updateCzarWhiteCards(c);
@@ -669,6 +736,10 @@ public class NetworkLayer implements Runnable {
         app.updateHand(d);
     }
 
+    public void awardRound(long card) {
+        currentGame.award(card);
+    }
+
     public void updateBlackCard() {
         app.updateBlackCard(new String(blackcards.get(this.currentGame.getBlackCard())));
     }
@@ -677,8 +748,19 @@ public class NetworkLayer implements Runnable {
         app.openGameView();
     }
 
+    public void openCzarView() {
+        String cardText = new String(blackcards.get(currentGame.getBlackCard()));
+
+        app.openCzarView(cardText);
+    }
+
     public void playCard(long card) {
         currentGame.play(card);
+    }
+
+    public void addCrown(long card) {
+        CardData c = new CardData(new String(blackcards.get(card)), card);
+        app.addCrown(c);
     }
 
     public boolean peerIsLive(String name) {
