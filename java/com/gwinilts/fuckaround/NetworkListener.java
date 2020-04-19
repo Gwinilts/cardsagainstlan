@@ -31,6 +31,19 @@ public class NetworkListener implements Runnable {
         this.run = false;
     }
 
+    public void shutDown() {
+        this.socket.close();
+        this.run = false;
+    }
+
+    private void timeOut() {
+        try {
+            Thread.sleep(25);
+        } catch (InterruptedException e) {
+            System.out.println("Layer woke up early");
+        }
+    }
+
     @Override
     public void run() {
         System.out.println("Listener started");
@@ -63,6 +76,8 @@ public class NetworkListener implements Runnable {
                 } else {
                     System.out.println("Dropping packet with invalid signature.");
                 }
+
+                timeOut();
             } catch (IOException e) {
                 // fatal, app should restart TODO
             }

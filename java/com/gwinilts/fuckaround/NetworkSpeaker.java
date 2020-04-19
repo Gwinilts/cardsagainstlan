@@ -71,6 +71,19 @@ public class NetworkSpeaker implements Runnable {
         run = false;
     }
 
+    private void timeOut() {
+        try {
+            Thread.sleep(25);
+        } catch (InterruptedException e) {
+            System.out.println("Layer woke up early");
+        }
+    }
+
+    public void shutDown() {
+        this.socket.close();
+        this.run = false;
+    }
+
     private InetAddress getBcast() throws NetworkLayerException {
         try {
             Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
@@ -142,12 +155,10 @@ public class NetworkSpeaker implements Runnable {
                     socket.send(packet);
                 }
 
-                Thread.sleep(200);
+                timeOut();
             }
         } catch (IOException e) {
             // TODO
-        } catch (InterruptedException e) {
-
         }
     }
 }

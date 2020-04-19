@@ -37,6 +37,13 @@ public class CardDeckAdapter extends RecyclerView.Adapter<CardDeckAdapter.CardVi
         this.app = context;
     }
 
+    public void addIfUnique(CardData c) {
+        for (CardData card: deck) {
+            if (card.getHash() == c.getHash()) return;
+        }
+        deck.add(c);
+    }
+
     @Override
     public CardDeckAdapter.CardViewHolder onCreateViewHolder(ViewGroup parent, int vType) {
         View view = inflater.inflate(R.layout.whitecard, parent, false);

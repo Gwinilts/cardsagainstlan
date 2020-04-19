@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">fuckaround</string>
+    <string name="about_text">
+        Welcome to fuckaround!
+
+        \nfuckaround is a cards against humanity clone for android devices.
+
+        \n\nfuckaround uses your local area network to talk to other players. This means that fuckaround does not need the internet to function. In fact, you can play this game with other players who are connected to your devices\' hotspot
+        even if you have no data reception.
+
+        \n\nTo use the app, you need to set a name. You can do that in the welcome screen. Once your name is set you can join or create games to play with other players.
+
+        \n\nIf you\'re not sure about the rules of the game, open the rules tab below to get up to speed.
+        \nUnless you\'re the card-czar for a particular round, you\'ll have a deck of white cards to play with.
+        \nTo play a white card, you need to long-press on it. Once you\'ve done that it will disappear and reappear on the card-czar\'s screen.
+
+        \n\nIf you are the card-czar, you have to wait for other players to submit their cards.
+        \nOnce everyone\'s played you can start turning over their cards by long-pressing them.
+        \nOnce your done, pick your favourite and long-press that. Whoever played it will win the round.
+
+        \n\nIf you want to see how many rounds you\'ve won, just open the score tab at the bottom of the screen during a game.
+    </string>
+    <string name="rules_text">
+        fuckaround rules:
+
+        \n\n1 - Rule 1
+        \n\n2 - Rule 2
+        \n\n3 - Rule 3
+
+        \n\n\nNice rules, eh?
+    </string>
 </resources>

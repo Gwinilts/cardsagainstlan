@@ -102,6 +102,7 @@ public class HostGame {
         round++;
         Hand deck;
         PeerPlay play;
+        currentBlackCard = pickRandomBlackCard();
 
         for (String peer: allPeers) { // deal the white cards
             deck = currentDecks.get(peer);
@@ -132,8 +133,6 @@ public class HostGame {
         } while (!layer.peerIsLive(peer)); // can't let the card czar be someone who isn't available right now
 
         // set black card
-
-        currentBlackCard = pickRandomBlackCard();
     }
 
     public byte[] generateRound() {

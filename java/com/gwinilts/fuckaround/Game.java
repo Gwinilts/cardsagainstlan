@@ -11,8 +11,11 @@ public class Game {
     private long currentBlackCard;
     private boolean played;
     private long currentPlay;
+    private long[] multiPlay;
+    private int playIndex;
     private long currentAward;
     private boolean awarded;
+    private boolean multi;
 
     public Game(NetworkLayer layer, String gameName, String peerName) {
         this.name = gameName;
@@ -23,6 +26,8 @@ public class Game {
         this.played = false;
         this.awarded = false;
         this.currentAward = 0;
+        multiPlay = new long[2];
+        playIndex = 0;
         round = 0;
     }
 
@@ -41,6 +46,13 @@ public class Game {
         this.currentAward = 0;
         this.awarded = false;
         this.currentPlay = 0;
+        playIndex = 0;
+
+        String cardText = new String(layer.blackcards.get(blackCard));
+        multi = cardText.indexOf("_____") != cardText.lastIndexOf("_____");
+
+        System.out.println(multi);
+        System.out.println(cardText);
 
         this.czar = (this.currentCzar.equals(this.peer));
         layer.addMsg(generateDeck());
@@ -110,6 +122,26 @@ public class Game {
         return play;
     }
 
+    public byte[] generateMPlay() {
+        byte[] nom = (name + "&--&" + peer).getBytes();
+        byte[] play = NetworkLayer.Verb.MPLAY.get(nom.length + 24);
+
+        for (int i = 0; i < nom.length; i++) {
+            play[i + 22] = nom[i];
+        }
+
+        for (int i = 0; i < 4; i++) {
+            play[i + 2] = (byte)(this.round >> (i * 8));
+        }
+
+        for (int i = 0; i < 8; i++) {
+            play[i + 6] = (byte)(this.multiPlay[0] >> (i * 8));
+            play[i + 14] = (byte)(this.multiPlay[1] >> (i * 8));
+        }
+
+        return play;
+    }
+
     public byte[] generateAward() {
         byte[] nom = (name).getBytes();
         byte[] award = NetworkLayer.Verb.AWARD.get(nom.length + 20);
@@ -131,9 +163,25 @@ public class Game {
 
 
 
-    public void play(long card) {
-        this.currentPlay = card;
-        this.played = true;
+    public int play(long card) {
+        if (!multi) {
+            this.currentPlay = card;
+            this.played = true;
+            return 0;
+        } else {
+            multiPlay[playIndex] = card;
+            playIndex++;
+
+            if (playIndex > 1) {
+                this.played = true;
+            }
+
+            return playIndex;
+        }
+    }
+
+    public boolean isMulti() {
+        return multi;
     }
 
     public void award(long card) {

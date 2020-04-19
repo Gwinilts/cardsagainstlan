@@ -41,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView.LayoutManager czarPlayCardsManager;
     private RecyclerView.LayoutManager scoreCardManager;
     private boolean czarMode;
+    private boolean helpOpen;
+    private boolean multiPlay;
+
+    private View activeView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
         this.hostFrame.setVisibility(View.GONE);
         this.gameLobbyFrame.setVisibility(View.GONE);
         this.splashFrame.setVisibility(View.VISIBLE);
+        this.multiPlay = false;
+
+        helpOpen = false;
+        activeView = splashFrame;
 
         this.czarMode = false;
 
@@ -147,6 +155,57 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        t = findViewById(R.id.helpDialogTabLayout);
+        t.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) { // help
+                    openHelpTab();
+                } else { // rules
+                    openRulesTab();
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+    }
+
+    public void exitGame(View view) {
+        layer.exitGame();
+        activeView.setVisibility(View.GONE);
+        lobbyFrame.setVisibility(View.VISIBLE);
+    }
+
+    public void quit(View view) {
+        layer.shutDown();
+        finish();
+        System.exit(0);
+    }
+
+    public void toggleHelp(View view) {
+        if (helpOpen) {
+            findViewById(R.id.helpfulDialog).setVisibility(View.GONE);
+            activeView.setVisibility(View.VISIBLE);
+            ((TextView)findViewById(R.id.helpTip)).setText("Need help? Tap here.");
+            helpOpen = false;
+        } else {
+            activeView.setVisibility(View.GONE);
+            findViewById(R.id.helpfulDialog).setVisibility(View.VISIBLE);
+            TabLayout t = findViewById(R.id.helpDialogTabLayout);
+            ((TextView)findViewById(R.id.helpTip)).setText("Go back.");
+            t.getTabAt(0).select();
+            openHelpTab();
+            helpOpen = true;
+        }
     }
 
     private void shipAssets() {
@@ -246,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 splashFrame.setVisibility(View.GONE);
                 lobbyFrame.setVisibility(View.VISIBLE);
-
+                activeView = lobbyFrame;
             }
         });
     }
@@ -266,6 +325,7 @@ public class MainActivity extends AppCompatActivity {
     public void createButtonClick(View view) {
         lobbyFrame.setVisibility(View.GONE);
         hostFrame.setVisibility(View.VISIBLE);
+        activeView = hostFrame;
         hideKbd(view);
     }
 
@@ -283,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
                 layer.setGame(name, true);
                 hostFrame.setVisibility(View.GONE);
                 gameLobbyFrame.setVisibility(View.VISIBLE);
+                activeView = gameLobbyFrame;
             }
         } else {
             prompt.setText("Set a proper name please (1 < length > 200)");
@@ -300,6 +361,7 @@ public class MainActivity extends AppCompatActivity {
             layer.setGame(gameList.getItem(index), false);
             lobbyFrame.setVisibility(View.GONE);
             gameLobbyFrame.setVisibility(View.VISIBLE);
+            activeView = gameLobbyFrame;
         }
     }
 
@@ -308,20 +370,28 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 for (CardData card: cards) {
-                    if (!cardDeckAdapter.deck.contains(card)) {
-                        cardDeckAdapter.deck.add(card);
-                        System.out.println(card.getText());
-                        cardDeckAdapter.notifyDataSetChanged();
-                    }
+                    cardDeckAdapter.addIfUnique(card);
                 }
+                cardDeckAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+    public void openHelpTab() {
+        findViewById(R.id.rulesTabContent).setVisibility(View.GONE);
+        findViewById(R.id.helpTabContent).setVisibility(View.VISIBLE);
+    }
+
+    public void openRulesTab() {
+        findViewById(R.id.rulesTabContent).setVisibility(View.VISIBLE);
+        findViewById(R.id.helpTabContent).setVisibility(View.GONE);
     }
 
     public void openGameTab() {
         gameLobbyFrame.setVisibility(View.GONE);
         gameScoreTab.setVisibility(View.GONE);
         tabbedGameView.setVisibility(View.VISIBLE);
+        activeView = tabbedGameView;
 
         if (czarMode) {
             gameFrame.setVisibility(View.GONE);
@@ -337,6 +407,7 @@ public class MainActivity extends AppCompatActivity {
         czarGameFrame.setVisibility(View.GONE);
         tabbedGameView.setVisibility(View.VISIBLE);
         gameScoreTab.setVisibility(View.VISIBLE);
+        activeView = tabbedGameView;
     }
 
     public void openGameView() {
@@ -346,6 +417,8 @@ public class MainActivity extends AppCompatActivity {
                 czarMode = false;
                 TabLayout t = findViewById(R.id.gameTabLayout);
                 t.getTabAt(0).select();
+                findViewById(R.id.normalWhiteCardView).setVisibility(View.GONE);
+                findViewById(R.id.normalWhiteText2).setVisibility(View.GONE);
                 openGameTab();
             }
         });
@@ -383,6 +456,7 @@ public class MainActivity extends AppCompatActivity {
         layer.exitGame();
         gameLobbyFrame.setVisibility(View.GONE);
         lobbyFrame.setVisibility(View.VISIBLE);
+        activeView = lobbyFrame;
     }
 
     public void gameLobbyStartClick(View view) {
@@ -392,21 +466,17 @@ public class MainActivity extends AppCompatActivity {
     public void cardTest(View view) {
         splashFrame.setVisibility(View.GONE);
         tabbedGameView.setVisibility(View.VISIBLE);
+        activeView = tabbedGameView;
 
-        scoreCards.deck.add(new CardData("go fuck yourself", 1));
-        scoreCards.deck.add(new CardData("go love someone", 2));
 
-        cardDeckAdapter.deck.add(new CardData("pish posh", 23));
-        cardDeckAdapter.deck.add(new CardData("mish mosh", 27));
-
-        czarPlayCards.deck.add(new CardData("fanny piss", 41));
-        czarPlayCards.deck.add(new CardData("smelly nose", 47));
-
-        scoreCards.notifyDataSetChanged();
-        cardDeckAdapter.notifyDataSetChanged();
-        czarPlayCards.notifyDataSetChanged();
+        ((TextView)findViewById(R.id.normalWhiteText1)).setText("apple");
+        ((TextView)findViewById(R.id.normalWhiteText2)).setText("bananna");
 
         openGameView();
+
+
+        findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
+        findViewById(R.id.normalWhiteCardView).setVisibility(View.VISIBLE);
 
     }
 
@@ -422,18 +492,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void submitWhitecard(int index) {
-        if (cardDeckAdapter.deck.size() < 10) return;
-        long card = cardDeckAdapter.deck.get(index).getHash();
+        if ((cardDeckAdapter.deck.size() < 10) && !multiPlay) return;
+
+        CardData c = cardDeckAdapter.deck.get(index);
+        long card = c.getHash();
+
+        int state = layer.playCard(card);
+
+        if (state == 0) {
+            multiPlay = false;
+        }
+
+        if (state == 1) {
+            multiPlay = true;
+        }
+
+        if (state == 2) {
+            multiPlay = false;
+        }
+
+        if (state < 2) {
+            ((TextView)findViewById(R.id.normalWhiteText1)).setText(c.getText());
+        } else {
+            ((TextView)findViewById(R.id.normalWhiteText2)).setText(c.getText());
+            findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
+        }
+
+        findViewById(R.id.normalWhiteCardView).setVisibility(View.VISIBLE);
         cardDeckAdapter.deck.remove(index);
         cardDeckAdapter.notifyDataSetChanged();
-
-        layer.playCard(card);
     }
 
     public void awardRound(long card) {
         czarPlayCards.deck.clear();
         layer.awardRound(card);
-        // TODO award round
     }
 
     public void addCrown(final CardData c) {
@@ -447,5 +539,6 @@ public class MainActivity extends AppCompatActivity {
     public void hostCancelButtonClick(View view) {
         hostFrame.setVisibility(View.GONE);
         lobbyFrame.setVisibility(View.VISIBLE);
+        activeView = lobbyFrame;
     }
 }
