@@ -72,6 +72,18 @@ public class HostGame {
         }
     }
 
+    public void submitCard(String peer, long[] cards) {
+        if (cards.length > 0) {
+            if (cards.length > 1) {
+                for (int i = cards.length - 1; i >= 0; i--) {
+                    submitCard(peer, cards[i]);
+                }
+            } else {
+                submitCard(peer, cards[0]);
+            }
+        }
+    }
+
     public boolean hasAwards() {
         return crowns.size() > 0;
     }

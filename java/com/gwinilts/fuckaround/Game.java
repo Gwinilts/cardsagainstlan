@@ -48,8 +48,8 @@ public class Game {
         this.currentPlay = 0;
         playIndex = 0;
 
-        String cardText = new String(layer.blackcards.get(blackCard));
-        multi = cardText.indexOf("_____") != cardText.lastIndexOf("_____");
+        String cardText = new String(layer.blackcards.get(blackCard)).replaceAll("_+", "______");
+        multi = cardText.indexOf("_______") != cardText.lastIndexOf("_______");
 
         System.out.println(multi);
         System.out.println(cardText);

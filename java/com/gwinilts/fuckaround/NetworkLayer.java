@@ -130,6 +130,8 @@ public class NetworkLayer implements Runnable {
         speaker = new NetworkSpeaker(this, 11583);
         run = true;
 
+        since = new HashMap<String, Long>();
+
         String path = app.getDataDir().getPath() + "/";
 
         whitecards = new Storage(path + "whitecards");
@@ -145,10 +147,27 @@ public class NetworkLayer implements Runnable {
         return newMsgs.remove();
     }
 
+    private HashMap<String, Long> since;
+
+    private boolean since(String name, long t) {
+        long d, s = System.currentTimeMillis();
+        if (since.get(name) == null) {
+            since.put(name, s);
+            return true;
+        } else {
+            d = s - since.get(name);
+
+            if (d > t) {
+                since.put(name, s);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     @Override
     public void run()  {
-        long lastClaimTime = -1, lastPokeTime = System.currentTimeMillis(), lastPollTime = System.currentTimeMillis();
-        long sinceLastClaim = 1000, sinceLastPoke = 0;
         claimCount = 0;
 
         listen = new Thread(listener);
@@ -159,69 +178,65 @@ public class NetworkLayer implements Runnable {
 
         while (run) {
             if (nameConfirmed) {
-                // poke every 1200 ms so other clients know we're here
-                sinceLastPoke = System.currentTimeMillis() - lastPokeTime;
-
-                if (sinceLastPoke > 600)  {
-                    lastPokeTime = System.currentTimeMillis();
+                if (since("poke", 600)) {
                     speaker.addMsg(generatePoke());
+                }
 
-                    if (game != null) {
+                if (game != null) {
+                    if (since("join", 400)) {
                         speaker.addMsg(generateJoin());
-                        if (host) {
-                            speaker.addMsg(generateInvite());
-                            if (currentHostGame != null) {
-                                speaker.addMsg(currentHostGame.generateRound());
-
-                                if (currentHostGame.hasAwards()) {
-                                    for (byte[] crown: currentHostGame.generateCrowns()) {
-                                        speaker.addMsg(crown);
-                                    }
-                                }
-                            }
-                        }
                     }
+
                     if (currentGame != null) {
-                        if (currentGame.isPlayed()) {
+                        if (currentGame.isPlayed() && since("play", 1000)) {
                             if (currentGame.isMulti()) {
                                 speaker.addMsg(currentGame.generateMPlay());
                             } else {
                                 speaker.addMsg(currentGame.generatePlay());
                             }
                         }
-                        if (currentGame.isAwarded()) {
+                        if (currentGame.isAwarded() && since("award", 950)) {
                             speaker.addMsg(currentGame.generateAward());
+                        }
+                    }
+
+                    if (host) {
+                        if (since("invite", 1000)) {
+                            speaker.addMsg(generateInvite());
+                        }
+
+                        if (currentHostGame != null) {
+                            if (since("round", 700)) {
+                                speaker.addMsg(currentHostGame.generateRound());
+                            }
+
+                            if (currentHostGame.hasAwards() && since("awards", 2600)) {
+                                for (byte[] crown: currentHostGame.generateCrowns()) {
+                                    speaker.addMsg(crown);
+                                }
+                            }
                         }
                     }
                 }
             } else {
                 if (name != null) {
-                    // claim
-                    if (claimCount < 4) {
-                        if (lastClaimTime < 0) {
-                            claimCount = 1;
-                            lastClaimTime = System.currentTimeMillis();
+                    if (claimCount < 10) {
+                        if (since("claim", 100)) {
+                            claimCount++;
                             speaker.addMsg(generateClaim());
-                        } else {
-                            sinceLastClaim = System.currentTimeMillis() - lastClaimTime;
-                            if (sinceLastClaim > 1000) {
-                                claimCount++;
-                                lastClaimTime = System.currentTimeMillis();
-                                speaker.addMsg(generateClaim());
-                            }
                         }
                     } else {
                         nameConfirmed = true;
+                        claimCount = 0;
                         app.claimSuccess();
                     }
                 }
             }
             handleMsg();
-            if ((System.currentTimeMillis() - lastPollTime) > 500) {
+            if (since("poll", 740)) {
                 userPoll();
                 invitePoll();
                 gamePoll();
-                lastPollTime = System.currentTimeMillis();
             }
             timeOut();
         }
@@ -459,7 +474,7 @@ public class NetworkLayer implements Runnable {
             data = (new String(msg)).trim();
             if (game.equals(data.substring(0, data.indexOf("&--&")))) {
                 if (currentHostGame != null) {
-                    currentHostGame.submitCard(data.substring(data.indexOf("&--&") + 4), card1);
+                    currentHostGame.submitCard(data.substring(data.indexOf("&--&") + 4), new long[] {card1, card2});
                 }
                 if (currentGame.isCzar()) {
                     addMultiWhiteCard(card1, card2);
@@ -645,19 +660,11 @@ public class NetworkLayer implements Runnable {
     }
 
     private void checkContest(byte[] msg) {
-        if (nameConfirmed) {
-            if (name.equals(new String(msg))) {
-                System.out.println("Someone contested my username but it's already confirmed. Ignoring.");
-            }
-        } else {
-            if (name != null) {
-                if (name.equals(new String(msg))) {
-                    System.out.println("Someone already has my username, I must restart.");
-                    name = null;
-                    claimCount = 0;
-                    app.claimFailed();
-                }
-            }
+        if (nameConfirmed) return;
+        if (name.equals(new String(msg))) {
+            name = null;
+            claimCount = 0;
+            app.claimFailed();
         }
     }
 

@@ -25,6 +25,7 @@ Nobody can win the game because I only have two devices to test on (solution = m
 
 Most of the protocol is defined:
 
+
 ```
 
 VERB byte[2]
@@ -87,22 +88,19 @@ As you can see, very much WIP although the protocol VERBs might not change much 
 
 # Status
 
-We are now at first alpha.
+Playable Beta, the game works but has some unintended behaviour/crashes
 
-The game is playable on my own home network (and your's too, probably). Ideally if you want to play, you need two other players who have an android device to play this on.
+## Issues
 
-The UI should work on most devices.
+Cards whose blank spaces contain 8 or more consecutive underscore characters are treated like cards with two or more blank spaces
 
-## Broken
+--- Any contiguous span of underscores is replaced with exactly six underscores.
 
-At the moment there is a prompt to show a help dialog for the game. It doesn't do anything.
+When a player submits two cards for a two card round, the second card is returned to their hand
 
-If it was to do anything there would have to be a concept of currentView, the root view that is being displayed as View.VISIBLE
+--- Because the currentHostGame was never told about the second card. HostGame.submitCard can now take a long[] as it's second argument. first card will be submitted last (so the play can be identified by the first card)
 
-That way when it closes we can restore that view.
 
-Other considerations are that if something happens to change the currentView outside of the control of the peer's device either:
+The game gets less responsive the longer you play it
 
-We should immediately close the help dialog
-
-Or we should be able to open the the new currentView when this peer hits 'Exit'
+--- Timeouts for different verbs changed, should make devices more responsive by reducing the amount of messages received per second.
