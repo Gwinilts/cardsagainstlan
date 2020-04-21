@@ -660,7 +660,7 @@ public class NetworkLayer implements Runnable {
     }
 
     private void checkContest(byte[] msg) {
-        if (nameConfirmed) return;
+        if (nameConfirmed || (name == null)) return;
         if (name.equals(new String(msg))) {
             name = null;
             claimCount = 0;
