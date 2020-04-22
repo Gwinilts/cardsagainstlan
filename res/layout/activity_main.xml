@@ -421,7 +421,7 @@
         android:id="@+id/gameLayoutFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/gameTabLayout"
@@ -474,7 +474,7 @@
                     android:layout_marginBottom="12dp"
                     android:onClick="exitGame"
                     android:text="Exit Game"
-                    app:layout_constraintBottom_toTopOf="@id/playerScoreDeck"
+                    app:layout_constraintBottom_toTopOf="@id/scoreInfo"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
@@ -487,7 +487,7 @@
                     android:layout_marginBottom="12dp"
                     android:onClick="quit"
                     android:text="Quit"
-                    app:layout_constraintBottom_toTopOf="@id/playerScoreDeck"
+                    app:layout_constraintBottom_toTopOf="@id/scoreInfo"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
@@ -495,12 +495,23 @@
                     android:id="@+id/playerScoreDeck"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_marginTop="76dp"
+                    android:layout_marginTop="5dp"
                     android:layout_marginBottom="1dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toBottomOf="@id/scoreInfo" />
+
+                <TextView
+                    android:id="@+id/scoreInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:text="You have no black cards."
+                    app:layout_constraintBottom_toTopOf="@id/playerScoreDeck"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/gameFullyExitButton" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -638,7 +649,7 @@
                 android:id="@+id/gameNormalView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -848,18 +859,19 @@
                     android:layout_marginTop="1dp"
                     android:layout_marginEnd="1dp"
                     android:layout_marginBottom="1dp"
+                    android:scrollbars="horizontal|vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content">
 
                         <TextView
                             android:id="@+id/textView8"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="24dp"
                             android:layout_marginTop="24dp"

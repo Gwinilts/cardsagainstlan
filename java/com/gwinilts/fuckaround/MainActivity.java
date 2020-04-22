@@ -1,10 +1,15 @@
 package com.gwinilts.fuckaround;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import android.view.inputmethod.InputMethodManager;
 
@@ -14,6 +19,8 @@ import android.widget.*;
 
 import com.google.android.material.tabs.TabLayout;
 
+import org.w3c.dom.Text;
+
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -22,6 +29,7 @@ import java.util.ArrayList;
 import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
     private View splashFrame;
@@ -53,11 +61,44 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        String logContent = "No Log Content";
         try {
-            System.setOut(new PrintStream(new File(getExternalFilesDir("logs").getAbsolutePath() + "/main.log")));
+            File log = new File(getExternalFilesDir("logs").getAbsolutePath() + "/main.log");
+
+            if (log.exists()) {
+                Scanner s = new Scanner(log);
+                logContent = "";
+                while (s.hasNextLine()) {
+                    logContent += s.nextLine() + "\n";
+                }
+                s.close();
+            }
+            PrintStream out = new PrintStream(new File(getExternalFilesDir("logs").getAbsolutePath() + "/main.log"));
+            System.setErr(out);
+            System.setOut(out);
         } catch (Exception e) {
             System.out.println("couldn't set new log dest");
         }
+
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                System.err.println("Uncaught exception in thread " + t.getName());
+                System.err.println(e.getMessage());
+
+                StackTraceElement[] s = e.getStackTrace();
+
+                for (StackTraceElement i: s) {
+                    System.err.println(i.toString());
+                }
+
+                System.err.println("Fatality!");
+
+                System.err.flush();
+                System.out.flush();
+                System.exit(-1);
+            }
+        });
 
         Date date = Calendar.getInstance().getTime();
         DateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy hh:mm:ss");
@@ -69,9 +110,11 @@ public class MainActivity extends AppCompatActivity {
         System.out.println();
         System.out.println(strDate);
 
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        ((TextView)findViewById(R.id.textView8)).setText(logContent);
 
         String dPath = getDataDir().getPath();
         try {
@@ -448,6 +491,7 @@ public class MainActivity extends AppCompatActivity {
         czarGameFrame.setVisibility(View.GONE);
         tabbedGameView.setVisibility(View.VISIBLE);
         gameScoreTab.setVisibility(View.VISIBLE);
+        ((TextView)findViewById(R.id.scoreInfo)).setText("You've won " + scoreCards.deck.size() + " black cards.");
         activeView = tabbedGameView;
     }
 
