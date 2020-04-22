@@ -421,7 +421,7 @@
         android:id="@+id/gameLayoutFrame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/gameTabLayout"
@@ -521,7 +521,6 @@
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     app:layout_constraintBottom_toTopOf="@id/cardCzarDeck"
-                    app:layout_constraintDimensionRatio="22:35"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHeight_percent="0.5"
                     app:layout_constraintStart_toStartOf="parent"
@@ -529,10 +528,9 @@
 
                     <TextView
                         android:id="@+id/cardCzarPrompt"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="You are the card czar!"
-                        app:layout_constraintBottom_toTopOf="@id/cardCzarCardZone"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -541,15 +539,17 @@
                         android:id="@+id/cardCzarCardZone"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="7dp"
                         android:layout_marginBottom="10dp"
                         android:visibility="visible"
                         app:cardBackgroundColor="#2E2A2A"
-                        app:cardCornerRadius="20dp"
+                        app:cardCornerRadius="10dp"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/cardCzarWhiteZone"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/cardCzarPrompt">
+                        app:layout_constraintTop_toBottomOf="@+id/cardCzarPrompt">
 
                         <androidx.constraintlayout.widget.ConstraintLayout
                             android:layout_width="match_parent"
@@ -571,6 +571,42 @@
                                 app:layout_constraintTop_toTopOf="parent" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
                     </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/cardCzarWhiteZone"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="7dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:alpha="0.5"
+                        app:cardCornerRadius="10dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/cardCzarCardZone"
+                        app:layout_constraintTop_toBottomOf="@id/cardCzarPrompt">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <TextView
+                                android:id="@+id/czarWhiteCardText"
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:text="@string/czar_white_card_prompt"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+                    </androidx.cardview.widget.CardView>
+
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -622,7 +658,14 @@
                         android:id="@+id/normalWhiteCardView"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
-                        android:visibility="gone"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="7dp"
+                        android:layout_marginBottom="10dp"
+                        android:alpha="0.5"
+                        android:visibility="visible"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="10dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintDimensionRatio="22:35"
                         app:layout_constraintEnd_toStartOf="@id/normalBlackCardView"
@@ -637,10 +680,11 @@
                                 android:id="@+id/normalWhiteText1"
                                 android:layout_width="0dp"
                                 android:layout_height="0dp"
-                                android:layout_marginStart="24dp"
-                                android:layout_marginTop="24dp"
-                                android:layout_marginEnd="24dp"
-                                android:text="TextView"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:text="@string/normal_white_card_prompt"
                                 app:layout_constraintBottom_toTopOf="@id/normalWhiteText2"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
@@ -668,11 +712,13 @@
                         android:id="@+id/normalBlackCardView"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginStart="7dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="10dp"
                         android:layout_marginBottom="10dp"
                         android:visibility="visible"
                         app:cardBackgroundColor="#373333"
-                        app:cardCornerRadius="20dp"
+                        app:cardCornerRadius="10dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintDimensionRatio="22:35"
                         app:layout_constraintEnd_toEndOf="parent"

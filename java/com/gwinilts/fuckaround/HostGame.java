@@ -1,5 +1,6 @@
 package com.gwinilts.fuckaround;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,7 +33,7 @@ public class HostGame {
     private ArrayList<Long> whiteDeck;
     private ArrayList<Long> blackDeck;
     private ArrayList<Crown> crowns;
-    private Random rng;
+    private SecureRandom rng;
     private String gameName;
 
     private int round;
@@ -45,7 +46,7 @@ public class HostGame {
         currentDecks = new HashMap<String, Hand>();
         currentPlay = new HashMap<>();
         crowns = new ArrayList<>();
-        rng = new Random();
+        rng = new SecureRandom();
         this.gameName = name;
 
         whiteDeck = new ArrayList<Long>();
@@ -59,9 +60,9 @@ public class HostGame {
 
     public void submitCard(String peer, long card) {
         Hand h = currentDecks.get(peer);
-        PeerPlay p = currentPlay.get(peer);
+        /*PeerPlay p = currentPlay.get(peer);
 
-        if (p != null) return;
+        if (p != null) return;*/
 
         int index = h.indexOf(card);
 
@@ -69,6 +70,7 @@ public class HostGame {
 
         if (index > -1) {
             currentPlay.put(peer, new PeerPlay(card, index));
+            h.setCard(index, pickRandomWhiteCard());
         }
     }
 
@@ -84,7 +86,7 @@ public class HostGame {
         }
     }
 
-    public boolean hasAwards() {
+    public boolean hasCrowns() {
         return crowns.size() > 0;
     }
 
@@ -99,15 +101,20 @@ public class HostGame {
     }
 
     public void awardRound(long card, int round) {
-        if (round != this.round) return;
+        if (round != this.round) {
+            System.out.println("wrong round for award (" + round + " instead of " + this.round + ")");
+            return;
+        }
+        PeerPlay play;
 
-        for (Hand h: currentDecks.values()) {
-            if (h.indexOf(card) > -1) {
-                crowns.add(new Crown(h.getName(), currentBlackCard));
-                nextRound();
-                return;
+        for (String peer: currentPlay.keySet()) {
+            play = currentPlay.get(peer);
+            if (play.card == card) {
+                crowns.add(new Crown(peer, currentBlackCard));
             }
         }
+
+        nextRound();
     }
 
     public void nextRound() {
@@ -123,13 +130,13 @@ public class HostGame {
                 for (int i = 0; i < 10; i++) {
                     deck.setCard(i, pickRandomWhiteCard());
                 }
-            } else {
+            } /*else {
                 System.out.println("concering " + peer + "...");
                 play = currentPlay.get(peer);
                 if (play != null) {
                     deck.setCard(play.getIndex(), pickRandomWhiteCard());
                 }
-            }
+            }*/
         }
 
         // wipe previous submissions
@@ -182,7 +189,6 @@ public class HostGame {
 
         for (int i = 0; i < 10; i++) {
             c = deck.getCard(i);
-            System.out.println("card " + (i + 1) + ": " + String.format("0x%016X", c));
             for (int x = 0; x < 8; x++) {
                 deal[((8 * i) + 6) + x] = (byte)(c >> (x * 8));
             }

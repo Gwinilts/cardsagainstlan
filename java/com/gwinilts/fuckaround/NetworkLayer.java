@@ -1,5 +1,6 @@
 package com.gwinilts.fuckaround;
 
+import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -130,7 +131,7 @@ public class NetworkLayer implements Runnable {
         speaker = new NetworkSpeaker(this, 11583);
         run = true;
 
-        since = new HashMap<String, Long>();
+        since = new EnumMap<Verb, Long>(Verb.class);
 
         String path = app.getDataDir().getPath() + "/";
 
@@ -147,18 +148,18 @@ public class NetworkLayer implements Runnable {
         return newMsgs.remove();
     }
 
-    private HashMap<String, Long> since;
+    private EnumMap<Verb, Long> since;
 
-    private boolean since(String name, long t) {
+    private boolean since(Verb v, long t) {
         long d, s = System.currentTimeMillis();
-        if (since.get(name) == null) {
-            since.put(name, s);
+        if (since.get(v) == null) {
+            since.put(v, s);
             return true;
         } else {
-            d = s - since.get(name);
+            d = s - since.get(v);
 
             if (d > t) {
-                since.put(name, s);
+                since.put(v, s);
                 return true;
             }
 
@@ -178,50 +179,48 @@ public class NetworkLayer implements Runnable {
 
         while (run) {
             if (nameConfirmed) {
-                if (since("poke", 600)) {
-                    speaker.addMsg(generatePoke());
-                }
-
                 if (game != null) {
-                    if (since("join", 400)) {
+                    if (host) {
+                        if (currentHostGame != null) {
+                            if (since(Verb.ROUND, 700)) {
+                                speaker.addMsg(currentHostGame.generateRound());
+                            }
+
+                            if (currentHostGame.hasCrowns() && since(Verb.CROWN, 2600)) {
+                                System.out.println("sending out the crowns");
+                                for (byte[] crown: currentHostGame.generateCrowns()) {
+                                    speaker.addMsg(crown);
+                                }
+                            }
+                        }
+                        if (since(Verb.INVITE, 1000)) {
+                            speaker.addMsg(generateInvite());
+                        }
+                    }
+                    if (since(Verb.JOIN, 400)) {
                         speaker.addMsg(generateJoin());
                     }
-
                     if (currentGame != null) {
-                        if (currentGame.isPlayed() && since("play", 1000)) {
+                        if (currentGame.isPlayed() && since(Verb.PLAY, 1000)) {
                             if (currentGame.isMulti()) {
                                 speaker.addMsg(currentGame.generateMPlay());
                             } else {
                                 speaker.addMsg(currentGame.generatePlay());
                             }
                         }
-                        if (currentGame.isAwarded() && since("award", 950)) {
+                        if (currentGame.isAwarded() && since(Verb.AWARD, 600)) {
+                            System.out.println("sending out awards");
                             speaker.addMsg(currentGame.generateAward());
                         }
                     }
-
-                    if (host) {
-                        if (since("invite", 1000)) {
-                            speaker.addMsg(generateInvite());
-                        }
-
-                        if (currentHostGame != null) {
-                            if (since("round", 700)) {
-                                speaker.addMsg(currentHostGame.generateRound());
-                            }
-
-                            if (currentHostGame.hasAwards() && since("awards", 2600)) {
-                                for (byte[] crown: currentHostGame.generateCrowns()) {
-                                    speaker.addMsg(crown);
-                                }
-                            }
-                        }
-                    }
+                }
+                if (since(Verb.POKE, 2300)) {
+                    speaker.addMsg(generatePoke());
                 }
             } else {
                 if (name != null) {
                     if (claimCount < 10) {
-                        if (since("claim", 100)) {
+                        if (since(Verb.CLAIM, 100)) {
                             claimCount++;
                             speaker.addMsg(generateClaim());
                         }
@@ -233,7 +232,7 @@ public class NetworkLayer implements Runnable {
                 }
             }
             handleMsg();
-            if (since("poll", 740)) {
+            if (since(Verb.INVALID, 740)) {
                 userPoll();
                 invitePoll();
                 gamePoll();
@@ -410,25 +409,10 @@ public class NetworkLayer implements Runnable {
         String pName;
         String data;
 
-        /*
-          for (int i = 0; i < 4; i++) {
-            deal[i + 2] = (byte)(this.round >> (i * 8));
-        }
-         */
-
         for (int i = 0; i < 4; i++) {
             round |= ((int)(msg[i]) & 0x000000FF) << (i * 8);
             msg[i] = ' ';
         }
-
-        /*
-        for (int i = 0; i < 10; i++) {
-            c = deck.getCard(i);
-            for (int x = 0; x < 8; x++) {
-                deal[((8 * i) + 6) + x] = (byte)(c >> (x * 8));
-            }
-        }
-         */
 
         for (int i = 0; i < 10; i++) {
             deck[i] = 0;
@@ -485,6 +469,7 @@ public class NetworkLayer implements Runnable {
 
     private void checkPlay(byte[] msg) {
         if (game == null || currentGame == null) return;
+        if (currentHostGame == null && !currentGame.isCzar()) return;
 
         long card = 0;
         int round = 0;
@@ -556,6 +541,8 @@ public class NetworkLayer implements Runnable {
     private void checkAward(byte[] msg) {
         if ((game == null) || (host == false) || currentHostGame == null) return;
 
+        System.out.println("got an award hey");
+
         int round = 0;
         long card = 0;
         String gName;
@@ -573,13 +560,13 @@ public class NetworkLayer implements Runnable {
         gName = (new String(msg)).trim();
 
         if (game.equals(gName)) {
+            System.out.println("valid award");
             currentHostGame.awardRound(card, round);
         }
     }
 
     private void checkRound(byte[] msg) {
         if (game == null) return;
-        if (currentGame == null) currentGame = new Game(this, game, name);
 
         int round = 0, split;
         long card = 0;
@@ -604,6 +591,7 @@ public class NetworkLayer implements Runnable {
 
         if (game.equals(gName)) {
             System.out.println("got valid round");
+            if (currentGame == null) currentGame = new Game(this, game, name);
             if (currentGame.setRound(round, cName, card)) {
                 this.speaker.addMsg(currentGame.generateDeck());
             }
@@ -740,7 +728,7 @@ public class NetworkLayer implements Runnable {
 
     private void timeOut() {
         try {
-            Thread.sleep(50);
+            Thread.sleep(20);
         } catch (InterruptedException e) {
             System.out.println("Layer woke up early");
         }
@@ -795,10 +783,6 @@ public class NetworkLayer implements Runnable {
         app.updateHand(d);
     }
 
-    public void awardRound(long card) {
-        currentGame.award(card);
-    }
-
     public void updateBlackCard() {
         app.updateBlackCard(new String(blackcards.get(this.currentGame.getBlackCard())));
     }
@@ -811,10 +795,6 @@ public class NetworkLayer implements Runnable {
         String cardText = new String(blackcards.get(currentGame.getBlackCard()));
 
         app.openCzarView(cardText);
-    }
-
-    public int playCard(long card) {
-        return currentGame.play(card);
     }
 
     public void addCrown(long card) {

@@ -1,16 +1,13 @@
 package com.gwinilts.fuckaround;
 
-import android.content.Context;
 import androidx.cardview.widget.CardView;
+
+import android.content.ClipData;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.LayoutInflater;
-
-
-import java.util.Collections;
 import java.util.ArrayList;
 
 public class CardDeckAdapter extends RecyclerView.Adapter<CardDeckAdapter.CardViewHolder> {
@@ -53,13 +50,20 @@ public class CardDeckAdapter extends RecyclerView.Adapter<CardDeckAdapter.CardVi
     }
 
     @Override
-    public void onBindViewHolder(CardViewHolder holder, final int position) {
+    public void onBindViewHolder(final CardViewHolder holder, final int position) {
         holder.text.setText(deck.get(position).getText());
         holder.card.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                app.submitWhitecard(position);
-                return false;
+                Game g = Game.get();
+                if (g.isPlayed()) return false;
+
+                String d = ((char)position) + deck.get(position).getText();
+
+                ClipData data = ClipData.newPlainText("card-data", d);
+                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);
+                v.startDrag(data, shadowBuilder, v, 0);
+                return true;
             }
         });
     }

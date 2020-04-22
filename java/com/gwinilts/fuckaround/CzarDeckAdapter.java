@@ -1,6 +1,8 @@
 package com.gwinilts.fuckaround;
 
 import androidx.cardview.widget.CardView;
+
+import android.content.ClipData;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,7 +58,18 @@ public class CzarDeckAdapter extends RecyclerView.Adapter<CzarDeckAdapter.CardVi
             @Override
             public boolean onLongClick(View v) {
                 if (c.isTurned()) {
-                    app.awardRound(c.getHash());
+                    //app.awardRound(c.getHash());
+                    Game g = Game.get();
+
+                    if (g.isAwarded()) return false;
+
+                    String d = ((char)position) + deck.get(position).getText();
+
+                    ClipData data = ClipData.newPlainText("card-data", d);
+                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);
+
+                    v.startDrag(data, shadowBuilder, v, 0);
+                    return true;
                 } else {
                     c.turnOver();
                     holder.text.setText(c.getText());

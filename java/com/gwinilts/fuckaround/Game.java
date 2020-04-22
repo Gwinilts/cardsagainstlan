@@ -1,6 +1,14 @@
 package com.gwinilts.fuckaround;
 
 public class Game {
+    private static Game game;
+    private static void setGame(Game g) {
+        game = g;
+    }
+    public static Game get() {
+        return game;
+    }
+
     private String name;
     private String peer;
     private String currentCzar;
@@ -29,6 +37,7 @@ public class Game {
         multiPlay = new long[2];
         playIndex = 0;
         round = 0;
+        Game.setGame(this);
     }
 
     public boolean setRound(int round, String czar, long blackCard) {
@@ -185,6 +194,8 @@ public class Game {
     }
 
     public void award(long card) {
+        if (this.awarded) return;
+        System.out.println("card is now awarded. check for award being sent");
         this.currentAward = card;
         this.awarded = true;
     }

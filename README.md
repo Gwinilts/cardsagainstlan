@@ -92,13 +92,17 @@ Playable Beta, the game works but has some unintended behaviour/crashes
 
 ## Issues
 
+We need a log.last that we can retrieve from devices if they crash
+
+
 Cards whose blank spaces contain 8 or more consecutive underscore characters are treated like cards with two or more blank spaces
 
---- Any contiguous span of underscores is replaced with exactly six underscores.
+--- Any contiguous span of underscores is replaced with exactly six underscores. FIXED
 
 When a player submits two cards for a two card round, the second card is returned to their hand
 
 --- Because the currentHostGame was never told about the second card. HostGame.submitCard can now take a long[] as it's second argument. first card will be submitted last (so the play can be identified by the first card)
+--- also the new cards were getting assigned at the start of the next round but they should be assigned immediately after a play is recognized
 
 
 The game gets less responsive the longer you play it

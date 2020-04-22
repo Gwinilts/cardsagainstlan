@@ -73,7 +73,7 @@ public class NetworkSpeaker implements Runnable {
 
     private void timeOut() {
         try {
-            Thread.sleep(25);
+            Thread.sleep(5);
         } catch (InterruptedException e) {
             System.out.println("Layer woke up early");
         }

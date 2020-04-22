@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+import java.text.DateFormat;
 import android.view.inputmethod.InputMethodManager;
 
 import android.os.Bundle;
@@ -15,8 +16,12 @@ import com.google.android.material.tabs.TabLayout;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     private View splashFrame;
@@ -48,6 +53,23 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        try {
+            System.setOut(new PrintStream(new File(getExternalFilesDir("logs").getAbsolutePath() + "/main.log")));
+        } catch (Exception e) {
+            System.out.println("couldn't set new log dest");
+        }
+
+        Date date = Calendar.getInstance().getTime();
+        DateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy hh:mm:ss");
+        String strDate = dateFormat.format(date);
+
+        System.out.println("com.gwinilts.fuckaround init");
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println(strDate);
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -177,6 +199,24 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        findViewById(R.id.normalWhiteCardView).setOnDragListener(new CardDeckDropListener(new CardDropCallback() {
+            @Override
+            public void run(String text, int index) {
+                findViewById(R.id.normalWhiteCardView).setAlpha(1);
+                submitWhitecard(text, index);
+            }
+        }));
+
+        findViewById(R.id.cardCzarWhiteZone).setOnDragListener(new CardDeckDropListener(new CardDropCallback() {
+            @Override
+            public void run(String text, int index) {
+                 CardData c = czarPlayCards.deck.get(index);
+                ((TextView)findViewById(R.id.czarWhiteCardText)).setText(c.getText());
+                findViewById(R.id.cardCzarWhiteZone).setAlpha(1);
+                awardRound(c.getHash());
+            }
+        }));
     }
 
     public void exitGame(View view) {
@@ -292,6 +332,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (uname.length() > 20) {
             prompt.setText("That nam'es too fucking long.");
+            return;
         }
 
         this.username = uname;
@@ -417,8 +458,10 @@ public class MainActivity extends AppCompatActivity {
                 czarMode = false;
                 TabLayout t = findViewById(R.id.gameTabLayout);
                 t.getTabAt(0).select();
-                findViewById(R.id.normalWhiteCardView).setVisibility(View.GONE);
+                ((TextView)findViewById(R.id.normalWhiteText1)).setText(R.string.normal_white_card_prompt);
+                ((TextView)findViewById(R.id.normalWhiteText2)).setText(R.string.normal_white_card_prompt_2);
                 findViewById(R.id.normalWhiteText2).setVisibility(View.GONE);
+                findViewById(R.id.normalWhiteCardView).setAlpha((float) 0.5);
                 openGameTab();
             }
         });
@@ -433,6 +476,8 @@ public class MainActivity extends AppCompatActivity {
                 t.getTabAt(0).select();
                 czarPlayCards.deck.clear();
                 czarPlayCards.notifyDataSetChanged();
+                ((TextView)findViewById(R.id.czarWhiteCardText)).setText(R.string.czar_white_card_prompt);
+                findViewById(R.id.cardCzarWhiteZone).setAlpha((float) 0.5);
                 openGameTab();
             }
         });
@@ -467,10 +512,17 @@ public class MainActivity extends AppCompatActivity {
         splashFrame.setVisibility(View.GONE);
         tabbedGameView.setVisibility(View.VISIBLE);
         activeView = tabbedGameView;
+        czarMode = false;
 
 
         ((TextView)findViewById(R.id.normalWhiteText1)).setText("apple");
         ((TextView)findViewById(R.id.normalWhiteText2)).setText("bananna");
+
+        cardDeckAdapter.addIfUnique(new CardData("bing bong bash", 100));
+
+        cardDeckAdapter.addIfUnique(new CardData("stinky willy", 30));
+
+        cardDeckAdapter.addIfUnique(new CardData("stinky willy", 3000));
 
         openGameView();
 
@@ -491,41 +543,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void submitWhitecard(int index) {
-        if ((cardDeckAdapter.deck.size() < 10) && !multiPlay) return;
-
+    public void submitWhitecard(String text, int index) {
         CardData c = cardDeckAdapter.deck.get(index);
-        long card = c.getHash();
+        Game g = Game.get();
 
-        int state = layer.playCard(card);
-
-        if (state == 0) {
-            multiPlay = false;
+        switch (g.play(c.getHash())) {
+            case 0:
+            case 1: {
+                ((TextView)findViewById(R.id.normalWhiteText1)).setText(text);
+                break;
+            }
+            case 2: {
+                ((TextView)findViewById(R.id.normalWhiteText2)).setText(text);
+                findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
+            }
         }
 
-        if (state == 1) {
-            multiPlay = true;
-        }
-
-        if (state == 2) {
-            multiPlay = false;
-        }
-
-        if (state < 2) {
-            ((TextView)findViewById(R.id.normalWhiteText1)).setText(c.getText());
-        } else {
-            ((TextView)findViewById(R.id.normalWhiteText2)).setText(c.getText());
-            findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
-        }
-
-        findViewById(R.id.normalWhiteCardView).setVisibility(View.VISIBLE);
         cardDeckAdapter.deck.remove(index);
         cardDeckAdapter.notifyDataSetChanged();
     }
 
     public void awardRound(long card) {
-        czarPlayCards.deck.clear();
-        layer.awardRound(card);
+        System.out.println(String.format("0x%016X", card) + " wins the round");
+        Game g = Game.get();
+        g.award(card);
     }
 
     public void addCrown(final CardData c) {

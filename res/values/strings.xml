@@ -29,4 +29,13 @@
 
         \n\n\nNice rules, eh?
     </string>
+    <string name="normal_white_card_prompt">
+        Long press a card from your hand then drop it here to submit it.
+    </string>
+    <string name="normal_white_card_prompt_2">
+        Drop another card here.
+    </string>
+    <string name="czar_white_card_prompt">
+        After you\'ve turned over the cards, long press one then drop it here to submit it.
+    </string>
 </resources>

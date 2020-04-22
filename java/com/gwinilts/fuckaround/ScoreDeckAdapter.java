@@ -51,7 +51,7 @@ public class ScoreDeckAdapter extends RecyclerView.Adapter<ScoreDeckAdapter.Card
         holder.card.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                app.submitWhitecard(position);
+                //app.submitWhitecard(position);
                 return false;
             }
         });
