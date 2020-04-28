@@ -787,8 +787,8 @@ public class NetworkLayer implements Runnable {
         app.updateBlackCard(new String(blackcards.get(this.currentGame.getBlackCard())));
     }
 
-    public void openPlayView() {
-        app.openGameView();
+    public void openPlayView(final String czar) {
+        app.openGameView(czar);
     }
 
     public void openCzarView() {

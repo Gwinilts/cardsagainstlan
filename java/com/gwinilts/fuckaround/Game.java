@@ -71,7 +71,7 @@ public class Game {
             layer.openCzarView();
             return false;
         } else {
-            layer.openPlayView();
+            layer.openPlayView(czar);
             return true;
         }
     }

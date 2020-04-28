@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStreamReader;
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean czarMode;
     private boolean helpOpen;
     private boolean multiPlay;
+    private File settings;
 
     private View activeView;
 
@@ -110,8 +112,31 @@ public class MainActivity extends AppCompatActivity {
         System.out.println();
         System.out.println(strDate);
 
+        String path = getDataDir().getPath() + "/";
+        settings = new File(path + "settings.txt");
+
+        if (settings.exists()) {
+            try {
+                Scanner r = new Scanner(new FileReader(settings));
+
+                username = r.nextLine();
+                System.out.println("read username " + username);
+
+                r.close();
+            } catch (Exception e) {
+                System.out.println("could not read settings file");
+            }
+        }
+
         super.onCreate(savedInstanceState);
+
+        System.out.println("game appears to be ready.");
+
         setContentView(R.layout.activity_main);
+
+        if (username != null) {
+            ((EditText)findViewById(R.id.uname)).setText(username, TextView.BufferType.EDITABLE);
+        }
 
 
         ((TextView)findViewById(R.id.textView8)).setText(logContent);
@@ -389,6 +414,22 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 splashFrame.setVisibility(View.GONE);
                 lobbyFrame.setVisibility(View.VISIBLE);
+
+                try {
+
+                    System.out.println("attepting to write settings file");
+                    settings.delete();
+                    settings.createNewFile();
+
+                    PrintStream os = new PrintStream(settings);
+                    os.println(username);
+                    os.flush();
+                    os.close();
+                } catch (Exception e) {
+                    System.out.println("could not write to settings file.");
+                }
+
+                ((TextView)findViewById(R.id.barLabel)).setText(username);
                 activeView = lobbyFrame;
             }
         });
@@ -495,7 +536,7 @@ public class MainActivity extends AppCompatActivity {
         activeView = tabbedGameView;
     }
 
-    public void openGameView() {
+    public void openGameView(final String czar) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -506,12 +547,13 @@ public class MainActivity extends AppCompatActivity {
                 ((TextView)findViewById(R.id.normalWhiteText2)).setText(R.string.normal_white_card_prompt_2);
                 findViewById(R.id.normalWhiteText2).setVisibility(View.GONE);
                 findViewById(R.id.normalWhiteCardView).setAlpha((float) 0.5);
+                ((TextView)findViewById(R.id.normalCzarPrompt)).setText(czar + " is the card czar!");
                 openGameTab();
             }
         });
     }
 
-    public void openCzarView(final String cardText) {
+    public void openCzarView(final String unused) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -568,7 +610,7 @@ public class MainActivity extends AppCompatActivity {
 
         cardDeckAdapter.addIfUnique(new CardData("stinky willy", 3000));
 
-        openGameView();
+        openGameView("penis");
 
 
         findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
