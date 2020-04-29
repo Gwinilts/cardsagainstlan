@@ -1,5 +1,6 @@
 package com.gwinilts.fuckaround;
 
+import java.security.SecureRandom;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.HashMap;
@@ -807,11 +808,49 @@ public class NetworkLayer implements Runnable {
     }
 
     public long[] getFullWhiteDeck() {
-        return this.whitecards.getAllKeys();
+        long[] deck = whitecards.getAllKeys();
+        Shuffeler rng = new Shuffeler(deck.length);
+        long tmp;
+        int index;
+        for (int o = 0; o < 10; o++) {
+            for (int i = 0; i < deck.length; i++) {
+                index = rng.get();
+
+                if (o % 2 == 0) {
+                    index = (deck.length - 1) - index;
+                }
+
+                tmp = deck[i];
+                deck[i] = deck[index];
+                deck[index] = tmp;
+            }
+        }
+
+        return deck;
     }
 
     public long[] getFullBlackDeck() {
-        return this.blackcards.getAllKeys();
+        long[] deck = blackcards.getAllKeys();
+
+        Shuffeler rng = new Shuffeler(deck.length);
+
+        long tmp;
+        int index;
+        for (int o = 0; o < 10; o++) {
+            for (int i = 0; i < deck.length; i++) {
+                index = rng.get();
+
+                if (o % 2 == 0) {
+                    index = (deck.length - 1) - index;
+                }
+
+                tmp = deck[i];
+                deck[i] = deck[index];
+                deck[index] = tmp;
+            }
+        }
+
+        return deck;
     }
 
     public void shutDown() {

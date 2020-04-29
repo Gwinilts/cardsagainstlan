@@ -130,13 +130,7 @@ public class HostGame {
                 for (int i = 0; i < 10; i++) {
                     deck.setCard(i, pickRandomWhiteCard());
                 }
-            } /*else {
-                System.out.println("concering " + peer + "...");
-                play = currentPlay.get(peer);
-                if (play != null) {
-                    deck.setCard(play.getIndex(), pickRandomWhiteCard());
-                }
-            }*/
+            }
         }
 
         // wipe previous submissions
@@ -177,6 +171,14 @@ public class HostGame {
     public byte[] generateDeal(String name) {
         Hand deck = currentDecks.get(name);
 
+        if (deck == null) {
+            deck = currentDecks.put(name, new Hand(name));
+
+            for (int i = 0; i < 10; i++) {
+                deck.setCard(i, pickRandomWhiteCard());
+            }
+        }
+
         byte[] sData = (gameName + "&--&" + name).getBytes();
 
         byte[] deal = NetworkLayer.Verb.DEAL.get(sData.length + 88);
@@ -207,7 +209,8 @@ public class HostGame {
                 blackDeck.add(card);
             }
         }
-        return blackDeck.remove(rng.nextInt(blackDeck.size()));
+        if (rng.nextBoolean()) return blackDeck.remove(0);
+        return blackDeck.remove(blackDeck.size() - 1);
     }
 
     public String getCardCZar() {
@@ -220,6 +223,8 @@ public class HostGame {
                 whiteDeck.add(card);
             }
         }
-        return whiteDeck.remove(rng.nextInt(whiteDeck.size()));
+
+        if (rng.nextBoolean()) return whiteDeck.remove(0);
+        return whiteDeck.remove(whiteDeck.size() - 1);
     }
 }

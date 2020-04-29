@@ -624,6 +624,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 czarPlayCards.deck.add(card);
+                czarPlayCards.shuffle();
                 czarPlayCards.notifyDataSetChanged();
             }
         });

@@ -3,6 +3,7 @@ package com.gwinilts.fuckaround;
 import androidx.cardview.widget.CardView;
 
 import android.content.ClipData;
+import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +48,30 @@ public class CzarDeckAdapter extends RecyclerView.Adapter<CzarDeckAdapter.CardVi
             if (c.getHash() == card) return true;
         }
         return false;
+    }
+
+    public void shuffle() {
+        CardData[] cards = deck.toArray(new CardData[0]);
+
+        Shuffeler rng = new Shuffeler(cards.length);
+
+        CardData tmp;
+        int index;
+
+
+        for (int i = 0; i < cards.length; i++) {
+            index = rng.get();
+
+            tmp = cards[i];
+            cards[i] = cards[index];
+            cards[index] = tmp;
+        }
+
+        deck.clear();
+
+        for (CardData card: cards) {
+            deck.add(card);
+        }
     }
 
     @Override
