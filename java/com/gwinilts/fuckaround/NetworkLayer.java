@@ -809,7 +809,13 @@ public class NetworkLayer implements Runnable {
 
     public long[] getFullWhiteDeck() {
         long[] deck = whitecards.getAllKeys();
+
+        return shuffle(deck);
+    }
+
+    public long[] shuffle(long[] deck) {
         Shuffeler rng = new Shuffeler(deck.length);
+
         long tmp;
         int index;
         for (int o = 0; o < 10; o++) {
@@ -823,6 +829,7 @@ public class NetworkLayer implements Runnable {
                 tmp = deck[i];
                 deck[i] = deck[index];
                 deck[index] = tmp;
+                rng.setSeed(tmp & deck[i]);
             }
         }
 
@@ -832,25 +839,8 @@ public class NetworkLayer implements Runnable {
     public long[] getFullBlackDeck() {
         long[] deck = blackcards.getAllKeys();
 
-        Shuffeler rng = new Shuffeler(deck.length);
+        return shuffle(deck);
 
-        long tmp;
-        int index;
-        for (int o = 0; o < 10; o++) {
-            for (int i = 0; i < deck.length; i++) {
-                index = rng.get();
-
-                if (o % 2 == 0) {
-                    index = (deck.length - 1) - index;
-                }
-
-                tmp = deck[i];
-                deck[i] = deck[index];
-                deck[index] = tmp;
-            }
-        }
-
-        return deck;
     }
 
     public void shutDown() {
