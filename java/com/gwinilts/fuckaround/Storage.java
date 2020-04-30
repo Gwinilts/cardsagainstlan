@@ -3,8 +3,41 @@ package com.gwinilts.fuckaround;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.security.SecureRandom;
 
 public class Storage {
+    private class Shuffler extends SecureRandom {
+
+        private int bit;
+        private long height;
+
+        public Shuffler (long height) {
+            fix(height);
+        }
+
+        public void fix(long height) {
+            bit = Long.toBinaryString(height).length();
+            this.height = height;
+            //System.out.println("fix " + height + " len=" + bit);
+        }
+
+        public long get() {
+            //if (true) return nextInt((int)height);
+            long i = this.next(bit);
+
+            while (i >= height) {
+                i %= (height);
+            }
+
+            return i;
+        }
+
+        public long get(int bits) {
+            return this.next(bits);
+        }
+    }
+
+
     private static long[] p = {
             2087,
             4481,
@@ -34,6 +67,11 @@ public class Storage {
             27127,
             7549
     };
+
+    private static long recordSize = 37;
+    private static int maxScore = 200000;
+    private static int popScore = 11111;
+
     public static long hash(byte[] buf) {
         int step = 1;
 
@@ -56,6 +94,8 @@ public class Storage {
 
     private RandomAccessFile data;
     private RandomAccessFile tree;
+    private Shuffler rng;
+    private byte id;
 
     private long dput(byte[] buf) throws IOException {
         long end, pos;
@@ -98,8 +138,8 @@ public class Storage {
     public long[] getAllKeys() {
         long[] keys;
         try {
-            keys =  new long[(int)(this.tree.length() / 32)];
-            for (long i = 0, x = 0; i < this.tree.length(); i += 32, x++) {
+            keys =  new long[(int)(this.tree.length() / recordSize)];
+            for (long i = 0, x = 0; i < this.tree.length(); i += recordSize, x++) {
                 this.tree.seek(i);
                 keys[(int)x] = this.tree.readLong();
             }
@@ -110,8 +150,77 @@ public class Storage {
         return null;
     }
 
+    public void dbgScore() {
+        long[] keys;
+        try {
+            keys =  new long[(int)(this.tree.length() / recordSize)];
+            for (long i = 0, x = 0; i < this.tree.length(); i += recordSize, x++) {
+                this.tree.seek(i + 32);
+                System.out.println(this.tree.readInt());
+            }
+        } catch (IOException e) {
+            System.out.println("failed to get all keys");
+        }
+    }
+
+    private void reset() {
+        System.out.println("resetting balance");
+        try {
+            for (long i = 0, x = 0; i < this.tree.length(); i += recordSize, x++) {
+                this.tree.seek(i + 32);
+                this.tree.writeInt(maxScore);
+            }
+        } catch (IOException e) {
+            System.out.println("something went wrong dur dur dur");
+        }
+    }
+
+    private int idFail;
+
+    public long next() throws Exception {
+        int minScore = maxScore, score;
+        long pos, n;
+        byte nid;
+
+        while (true) {
+            if (idFail > (tree.length() / recordSize) * 5) {
+                id = (byte)rng.get(8);
+                idFail = 0;
+                //System.out.println("id is now " + id);
+            }
+
+            pos = rng.get() * recordSize;
+            //System.out.println(pos);
+
+            this.tree.seek(pos + 32);
+            score = this.tree.readInt();
+
+            this.tree.seek(pos + 36);
+            nid = this.tree.readByte();
+
+            if (nid != id) {
+                if (score > minScore) {
+                    this.tree.seek(pos);
+                    n = this.tree.readLong();
+                    rng.setSeed(n * (long)score);
+
+                    this.tree.seek(pos + 36);
+                    this.tree.writeByte(id);
+                    return n;
+                } else {
+                    this.tree.seek(pos + 32);
+                    this.tree.writeInt(score + 1);
+                    minScore--;
+                }
+            } else {
+                idFail++;
+            }
+        }
+    }
+
     public byte[] get(long hash) {
         long test, pos = 0;
+        int score, tries = 0;
         boolean match = false;
 
         try {
@@ -119,11 +228,37 @@ public class Storage {
                 if (pos < 0) {
                     return null;
                 }
+
+
+                tries++;
                 this.tree.seek(pos);
                 test = this.tree.readLong();
                 if (test == hash) {
-                    match = true;
+
+                    this.tree.seek(pos + 32);
+                    score = this.tree.readInt();
+                    score -= (tries + rng.nextInt(50));
+                    this.tree.seek(pos + 32);
+                    this.tree.writeInt(score);
+
+                    this.tree.seek(pos + 24);
+                    pos = this.tree.readLong();
+
+                    return this.dget(pos);
+
                 } else {
+
+                    this.tree.seek(pos + 32);
+                    score = this.tree.readInt();
+
+                    //score -= tries;
+
+
+                    if (score < 0) score = maxScore;
+
+                    this.tree.seek(pos + 32);
+                    this.tree.writeInt(score);
+
                     if (test > hash) { // right
                         this.tree.seek(pos + 16);
                         pos = this.tree.readLong();
@@ -131,14 +266,8 @@ public class Storage {
                         this.tree.seek(pos + 8);
                         pos = this.tree.readLong();
                     }
+
                 }
-            }
-            if (match) {
-                this.tree.seek(pos + 24);
-                pos = this.tree.readLong();
-                return this.dget(pos);
-            } else {
-                System.out.println("no match?");
             }
         } catch (IOException e) {
             System.out.println("ran out of file");
@@ -153,7 +282,6 @@ public class Storage {
 
         while (true) {
             try {
-                System.out.println(this.tree.length());
                 this.tree.seek(pos);
                 test = this.tree.readLong();
 
@@ -173,7 +301,7 @@ public class Storage {
                     break;
                 }
             } catch (IOException e) {
-                System.out.println(e);
+                System.out.println("possibly no data in file");
                 break;
             }
         }
@@ -186,8 +314,13 @@ public class Storage {
             this.tree.seek(pos + 16);
             this.tree.writeLong(-1);
             this.tree.seek(pos + 24);
-            test = this.dput(data);
             this.tree.writeLong(this.dput(data));
+            this.tree.seek(pos + 32);
+            this.tree.writeInt(maxScore);
+            this.tree.seek(pos + 36);
+            this.tree.writeByte(id);
+
+            rng.fix(tree.length() / recordSize);
         } catch (IOException e) {
             System.out.print("oh fuck");
         }
@@ -198,6 +331,24 @@ public class Storage {
         try {
             this.data = new RandomAccessFile(path + "._d", "rw");
             this.tree = new RandomAccessFile(path + "._t", "rw");
+
+            rng = new Shuffler(tree.length() / recordSize);
+            byte nid;
+            idFail = 0;
+
+            if (this.tree.length() > recordSize) {
+                this.tree.seek(36);
+                nid = id = this.tree.readByte();
+
+                while (nid == id) {
+                    id = (byte)rng.get();
+                }
+            } else {
+                rng.fix(8);
+                id = (byte) rng.get();
+            }
+
+            System.out.println("picked " + id);
         } catch (IOException e) {
             System.out.println("couldn't open filed");
         }

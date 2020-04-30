@@ -57,6 +57,9 @@ public class Game {
         this.currentPlay = 0;
         playIndex = 0;
 
+        System.out.println("black card");
+        System.out.println(String.format("0x%016X", blackCard));
+
         String cardText = new String(layer.blackcards.get(blackCard)).replaceAll("_{2,}", "______");
         multi = (cardText.indexOf("______") != cardText.lastIndexOf("______")) || cardText.startsWith("2 things ");
 

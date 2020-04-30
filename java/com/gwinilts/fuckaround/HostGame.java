@@ -37,8 +37,6 @@ public class HostGame {
     private String gameName;
 
     private int round;
-    private boolean roundAwarded;
-    private ArrayList<String> winners;
 
     public HostGame(NetworkLayer l, String name) {
         layer = l;
@@ -121,7 +119,13 @@ public class HostGame {
         round++;
         Hand deck;
         PeerPlay play;
-        currentBlackCard = pickRandomBlackCard();
+        try {
+            currentBlackCard = layer.blackcards.next();
+        } catch (Exception e) {
+            System.out.println("could not pick a black card (fatal)");
+            System.out.flush();
+            System.exit(-1);
+        }
 
         for (String peer: allPeers) { // deal the white cards
             deck = currentDecks.get(peer);
@@ -172,7 +176,7 @@ public class HostGame {
         Hand deck = currentDecks.get(name);
 
         if (deck == null) {
-            deck = currentDecks.put(name, new Hand(name));
+            currentDecks.put(name, deck = new Hand(name));
 
             for (int i = 0; i < 10; i++) {
                 deck.setCard(i, pickRandomWhiteCard());
@@ -203,28 +207,17 @@ public class HostGame {
         return deal;
     }
 
-    public long pickRandomBlackCard() {
-        if (blackDeck.size() < 1) {
-            for (long card: layer.getFullBlackDeck()) {
-                blackDeck.add(card);
-            }
-        }
-        if (rng.nextBoolean()) return blackDeck.remove(0);
-        return blackDeck.remove(blackDeck.size() - 1);
-    }
-
     public String getCardCZar() {
         return allPeers.peek();
     }
 
     public long pickRandomWhiteCard() {
-        if (whiteDeck.size() < 1) {
-            for (long card: layer.getFullWhiteDeck()) {
-                whiteDeck.add(card);
-            }
+        try {
+            return layer.whitecards.next();
+        } catch (Exception e) {
+            System.out.println("could not pick a white card (fatal)");
+            System.exit(-1);
         }
-
-        if (rng.nextBoolean()) return whiteDeck.remove(0);
-        return whiteDeck.remove(whiteDeck.size() - 1);
+        return 0;
     }
 }

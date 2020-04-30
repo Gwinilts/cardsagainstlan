@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             File white = new File(dPath + "/whitecards._d");
 
-            if (!white.exists()) {
+            if (!white.exists() || true) {
                 shipAssets();
             }
         } catch (Exception e) {
