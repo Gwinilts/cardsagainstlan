@@ -116,7 +116,6 @@ public class HostGame {
     }
 
     public void nextRound() {
-        round++;
         Hand deck;
         PeerPlay play;
         try {
@@ -149,6 +148,7 @@ public class HostGame {
             peer = allPeers.peek();
         } while (!layer.peerIsLive(peer)); // can't let the card czar be someone who isn't available right now
 
+        round++;
         // set black card
     }
 

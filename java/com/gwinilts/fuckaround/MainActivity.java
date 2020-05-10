@@ -7,10 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.text.DateFormat;
 import android.view.inputmethod.InputMethodManager;
 
@@ -19,8 +16,6 @@ import android.view.*;
 import android.widget.*;
 
 import com.google.android.material.tabs.TabLayout;
-
-import org.w3c.dom.Text;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -634,16 +629,18 @@ public class MainActivity extends AppCompatActivity {
         CardData c = cardDeckAdapter.deck.get(index);
         Game g = Game.get();
 
-        switch (g.play(c.getHash())) {
-            case 0:
-            case 1: {
-                ((TextView)findViewById(R.id.normalWhiteText1)).setText(text);
-                break;
-            }
-            case 2: {
-                ((TextView)findViewById(R.id.normalWhiteText2)).setText(text);
-                findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
-            }
+        int play = g.play(c.getHash());
+
+        if (play < 2) {
+            ((TextView)findViewById(R.id.normalWhiteText1)).setText(text);
+        }
+
+        if (play == 1) {
+            findViewById(R.id.normalWhiteText2).setVisibility(View.VISIBLE);
+        }
+
+        if (play == 2) {
+            ((TextView)findViewById(R.id.normalWhiteText2)).setText(text);
         }
 
         cardDeckAdapter.deck.remove(index);

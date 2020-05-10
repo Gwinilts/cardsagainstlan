@@ -614,8 +614,6 @@ public class NetworkLayer implements Runnable {
 
             if (data[1].equals(game.hostName())) {
                 game.update();
-            } else {
-                // TODO: contest INVITE
             }
         } else {
             System.out.println("Discovered new game " + data[0]);
@@ -637,6 +635,10 @@ public class NetworkLayer implements Runnable {
         if (!game.equals(data[1])) {
             System.out.println("Dropped JOIN for " + data[1] + " my game is " + game);
             return;
+        }
+
+        if (currentHostGame != null) {
+            currentHostGame.addPeer(data[0]);
         }
 
         if (currentGamePeers.contains(data[0])) {
@@ -754,7 +756,7 @@ public class NetworkLayer implements Runnable {
     public synchronized void startGame() {
         if (this.game != null && this.host) {
             this.currentHostGame = new HostGame(this, this.game);
-            for (String peer: currentGamePeers) {
+            for (String peer: shuffle(currentGamePeers.toArray(new String[0]))) {
                 this.currentHostGame.addPeer(peer);
             }
             this.currentHostGame.nextRound();
@@ -807,40 +809,21 @@ public class NetworkLayer implements Runnable {
         return this.peerNames.contains(name);
     }
 
-    public long[] getFullWhiteDeck() {
-        long[] deck = whitecards.getAllKeys();
-
-        return shuffle(deck);
-    }
-
-    public long[] shuffle(long[] deck) {
-        Shuffeler rng = new Shuffeler(deck.length);
-
-        long tmp;
+    public <T> T[] shuffle(T[] array) {
+        T tmp;
         int index;
-        for (int o = 0; o < 10; o++) {
-            for (int i = 0; i < deck.length; i++) {
-                index = rng.get();
+        SecureRandom rand = new SecureRandom();
 
-                if (o % 2 == 0) {
-                    index = (deck.length - 1) - index;
-                }
+        for (int i = 0; i < array.length; i++) {
+            index = rand.nextInt(array.length);
 
-                tmp = deck[i];
-                deck[i] = deck[index];
-                deck[index] = tmp;
-                rng.setSeed(tmp & deck[i]);
-            }
+            tmp = array[i];
+            array[i] = array[index];
+            array[index] = tmp;
+
         }
 
-        return deck;
-    }
-
-    public long[] getFullBlackDeck() {
-        long[] deck = blackcards.getAllKeys();
-
-        return shuffle(deck);
-
+        return array;
     }
 
     public void shutDown() {
